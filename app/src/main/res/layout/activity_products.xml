@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="#fffffdfe">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_height="?attr/actionBarSize"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:contentInsetStart="72dp" />
+
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+            android:background="#fffffdfe">
+
+            <FrameLayout
+                android:id="@+id/frame_container"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                >
+
+                <com.mobeta.android.dslv.DragSortListView
+                    xmlns:dslv="http://schemas.android.com/apk/res/pl.pwr.mipo.mipoo"
+                    android:id="@+id/item_list"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:dividerHeight="0dp"
+                    android:footerDividersEnabled="false"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:fastScrollEnabled="true"
+                    dslv:collapsed_height="2dp"
+                    dslv:drag_enabled="true"
+                    dslv:drag_handle_id="@id/drag_handle"
+                    dslv:drag_scroll_start="0.33"
+                    dslv:drag_start_mode="onDown"
+                    dslv:float_alpha="0.6"
+                    dslv:max_drag_scroll_speed="0.5"
+                    dslv:remove_enabled="true"
+                    dslv:remove_mode="flingRemove"
+                    dslv:slide_shuffle_speed="0.3"
+                    dslv:sort_enabled="true"
+                    dslv:track_drag_sort="false"
+                    dslv:use_default_controller="true"
+                    android:background="#fffffdfe" />
+
+                <com.melnykov.fab.FloatingActionButton
+                    xmlns:fab="http://schemas.android.com/apk/res-auto"
+                    android:id="@+id/fab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|right"
+                    android:src="@mipmap/ic_add_white_24dp"
+                    fab:fab_colorNormal="@color/ColorPrimary"
+                    fab:fab_colorPressed="@color/ColorPrimaryDark"
+                    fab:fab_colorRipple="@color/ColorPrimaryDark"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_alignBottom="@+id/item_list"
+                    android:layout_alignRight="@+id/item_list"
+                    android:layout_alignEnd="@+id/item_list" />
+            </FrameLayout>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
