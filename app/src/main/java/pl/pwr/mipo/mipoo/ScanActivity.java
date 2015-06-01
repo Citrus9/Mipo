@@ -74,7 +74,7 @@ public class ScanActivity extends ActionBarActivity {
             tvbarcode.setText("Barcode " + barcode);
 
 
-//            checkCode(barcode);
+            checkCode(barcode);
 
             Log.d("SCAN RESULT", "Barcode " + barcode + " Name " + typ);
 

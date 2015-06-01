@@ -93,7 +93,7 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 
     private static final String DATABASE_CREATE_GROUPMEMBERS =
             "CREATE TABLE " + GROUPMembers_TABLE+ " (" +
-                    GROUPMembers_KEY_ROWID + " INTEGER NOR NULL REFERENCES, " + GROUP_TABLE + "(" + GROUP_KEY_ROWID + ")" +
+                    GROUPMembers_KEY_ROWID + " INTEGER NOR NULL REFERENCES, " + GROUP_TABLE + "(" + GROUP_KEY_ROWID + ")," +
                     GROUPMembers_USERS +" TEXT );";
     /*
     private static final String DATABASE_CREATE_GROUPLISTS =
@@ -144,7 +144,7 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 			mDb.execSQL(DATABASE_CREATE_LISTS);
             mDb.execSQL(DATABASE_CREATE_PRODUCTS);
             mDb.execSQL(DATABASE_CREATE_GROUPS);
-            mDb.execSQL(DATABASE_CREATE_GROUPMEMBERS);
+//            mDb.execSQL(DATABASE_CREATE_GROUPMEMBERS);
            // mDb.execSQL(DATABASE_CREATE_GROUPLISTS);
             mDb.execSQL(CREATE_LOGIN_TABLE);
 
