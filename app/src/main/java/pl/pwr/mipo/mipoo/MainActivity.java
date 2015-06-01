@@ -184,6 +184,10 @@ public class MainActivity extends ActionBarActivity {
                     Intent i = new Intent(MainActivity.this, ScanActivity.class);
                     startActivity(i);
                 }
+                if(position == 2){
+                    Intent i = new Intent(MainActivity.this, GroupActivity.class);
+                    startActivity(i);
+                }
                 Toast.makeText(MainActivity.this, "Clicked item #" + position, Toast.LENGTH_SHORT).show();
             }
         });

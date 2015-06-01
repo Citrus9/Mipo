@@ -31,7 +31,7 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 	private SQLiteDatabase mDb;
 
 	private static final String DATABASE_NAME = "lists";
-	private static final int SCHEMA_VERSION = 5;
+	private static final int SCHEMA_VERSION = 6; //bez tablicy groupMembers  i groupList
 
 	public static final String ITEM_KEY_ROWID = "_id";
 	public static final String ITEM_TABLE = "list_table";
@@ -45,11 +45,26 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
     public static final String PROD_COMPLETE = "product_complete";
     public static final String PROD_LIST_ID = "list_id";
 
+    public static final String GROUP_KEY_ROWID = "_id";
+    public static final String GROUP_TABLE = "group_table";
+    public static final String GROUP_NAME = "group_name";
+    public static final String GROUP_POSITION = "group_position";
+
+    public static final String GROUPMembers_KEY_ROWID = "_idGroup";
+    public static final String GROUPMembers_TABLE = "groupMembers_table";
+    public static final String GROUPMembers_USERS = "groupMembers_user";
+
+    /*
+    public static final String GROUPLists_KEY_ROWID = "_idGroup";
+    public static final String GROUPLists_TABLE = "groupLists_table";
+    public static final String GROUPLists_idList = "groupLists_list";
+    */
+
     // Login table name
     private static final String TABLE_LOGIN = "login";
     // Login Table Columns names
     private static final String KEY_ID = "id";
-    private static final String KEY_NAME = "name";
+    public static final String KEY_NAME = "name";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_UID = "uid";
 
@@ -70,6 +85,22 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
                     PROD_COMPLETE +" INTEGER, " +
                     PROD_LIST_ID + " INTEGER NOT NULL REFERENCES " + ITEM_TABLE + "(" + ITEM_KEY_ROWID + "));";
 
+    private static final String DATABASE_CREATE_GROUPS =
+            "CREATE TABLE " + GROUP_TABLE+ " (" +
+                    GROUP_KEY_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    GROUP_NAME +" TEXT, " +
+                    GROUP_POSITION +" INTEGER);";
+
+    private static final String DATABASE_CREATE_GROUPMEMBERS =
+            "CREATE TABLE " + GROUPMembers_TABLE+ " (" +
+                    GROUPMembers_KEY_ROWID + " INTEGER NOR NULL REFERENCES, " + GROUP_TABLE + "(" + GROUP_KEY_ROWID + ")" +
+                    GROUPMembers_USERS +" TEXT );";
+    /*
+    private static final String DATABASE_CREATE_GROUPLISTS =
+            "CREATE TABLE " + GROUPLists_TABLE+ " (" +
+                    GROUPLists_KEY_ROWID + " INTEGER NOR NULL REFERENCES, " + GROUP_TABLE + "(" + GROUP_KEY_ROWID + ")" +
+                    GROUPLists_idList +" TEXT );";
+    */
     private static final String CREATE_LOGIN_TABLE = "CREATE TABLE " + TABLE_LOGIN + "("
             + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NAME + " TEXT,"
             + KEY_EMAIL + " TEXT UNIQUE," + KEY_UID + " TEXT" + ")";
@@ -112,6 +143,9 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 
 			mDb.execSQL(DATABASE_CREATE_LISTS);
             mDb.execSQL(DATABASE_CREATE_PRODUCTS);
+            mDb.execSQL(DATABASE_CREATE_GROUPS);
+            mDb.execSQL(DATABASE_CREATE_GROUPMEMBERS);
+           // mDb.execSQL(DATABASE_CREATE_GROUPLISTS);
             mDb.execSQL(CREATE_LOGIN_TABLE);
 
 			mDb.setTransactionSuccessful();
@@ -128,6 +162,8 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 		mDb.execSQL("DROP TABLE IF EXISTS " + ITEM_TABLE);
         mDb.execSQL("DROP TABLE IF EXISTS " + PROD_TABLE);
         mDb.execSQL("DROP TABLE IF EXISTS " + TABLE_LOGIN);
+        mDb.execSQL("DROP TABLE IF EXISTS" + GROUP_TABLE);
+        mDb.execSQL("DROP TABLE IF EXISTS" + GROUPMembers_TABLE);
 		onCreate(mDb);
 	}
 
@@ -207,6 +243,15 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 				ITEM_POSITION + " " + sort_order);
 	}
 
+     public Cursor getAllGroupRecords() {
+        return mDb.query(GROUP_TABLE, new String[] {GROUP_KEY_ROWID, GROUP_NAME, GROUP_POSITION }, null, null, null, null,
+                GROUP_POSITION + " " + sort_order);
+    }
+
+    public Cursor getAllGroupMembersRecords() {
+        return mDb.query(GROUPMembers_TABLE, new String[] {GROUPMembers_KEY_ROWID, GROUPMembers_USERS}, null, null, null, null,null);
+    }
+
     public Cursor getAllProdRecordsByList(long list_id) {
         return mDb.query(PROD_TABLE, new String[] {PROD_KEY_ROWID, PROD_NAME, PROD_POSITION, PROD_COMPLETE, PROD_LIST_ID },
                 PROD_LIST_ID + "=" + list_id, null, null, null,
@@ -234,7 +279,6 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
     }
 
 	public long insertListRecord(String item_name) {
-
         int item_Position = getMaxColumnData();
 		ContentValues initialItemValues = new ContentValues();
 		initialItemValues.put(ITEM_NAME, item_name);
@@ -242,6 +286,23 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 
 		return mDb.insert(ITEM_TABLE, null, initialItemValues);
 	}
+
+    public long insertUserRecord(String name){
+        ContentValues initialItemValues = new ContentValues();
+        initialItemValues.put(GROUPMembers_USERS, name);
+
+        return mDb.insert(GROUPMembers_TABLE, null, initialItemValues);
+    }
+
+    public long insertGroupRecord(String group_name) {
+        int group_Position = getMaxColumnData();
+        ContentValues initialItemValues = new ContentValues();
+        initialItemValues.put(GROUP_NAME, group_name);
+        initialItemValues.put(GROUP_POSITION,(group_Position + 1));
+
+        return mDb.insert(GROUP_TABLE, null, initialItemValues);
+    }
+
 
     public long insertProductRecord(String item_name, long list_id, int complete) {
         int item_Position = getMaxProductPosition(list_id);
@@ -259,6 +320,10 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 		return mDb.delete(ITEM_TABLE, ITEM_KEY_ROWID + "=" + rowId, null) > 0;
 	}
 
+    public boolean deleteGroupRecord(long rowId) {
+        return mDb.delete(GROUP_TABLE, GROUP_KEY_ROWID + "=" + rowId, null) > 0;
+    }
+
     public boolean deleteProductRecord(long rowId) {
         return mDb.delete(PROD_TABLE, PROD_KEY_ROWID + "=" + rowId, null) > 0;
     }
@@ -269,6 +334,13 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 		return mDb.update(ITEM_TABLE, ItemArgs, ITEM_KEY_ROWID + "=" + rowId,
 				null) > 0;
 	}
+
+    public boolean updateGroupRecord(long rowId, String group_name) {
+        ContentValues GroupArgs = new ContentValues();
+        GroupArgs.put(GROUP_NAME, group_name);
+        return mDb.update(GROUP_TABLE, GroupArgs, GROUP_KEY_ROWID + "=" + rowId,
+                null) > 0;
+    }
 
     public boolean updateProductRecord(long rowId, String item_name, int complete) {
         ContentValues ItemArgs = new ContentValues();
@@ -284,6 +356,13 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 		return mDb.update(ITEM_TABLE, ItemArgs, ITEM_KEY_ROWID + "=" + rowId,
 				null) > 0;
 	}
+
+    public boolean updateGroupPosition(long rowId, Integer position) {
+        ContentValues GroupArgs = new ContentValues();
+        GroupArgs.put(GROUP_POSITION, position);
+        return mDb.update(GROUP_TABLE, GroupArgs, GROUP_KEY_ROWID + "=" + rowId,
+                null) > 0;
+    }
 
     public boolean updateProductPosition(long rowId, Integer position) {
         ContentValues ItemArgs = new ContentValues();
