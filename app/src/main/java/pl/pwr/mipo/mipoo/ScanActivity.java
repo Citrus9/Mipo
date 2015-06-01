@@ -21,11 +21,17 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,15 +80,15 @@ public class ScanActivity extends ActionBarActivity {
             tvbarcode.setText("Barcode " + barcode);
 
 
-//            checkCode(barcode);
+            checkCode(barcode);
 
             Log.d("SCAN RESULT", "Barcode " + barcode + " Name " + typ);
 
             return;
         }else {
             if (resultCode != 0) return;{
-                    Log.i((String) "App", (String) "Scan unsuccessful");
-                    return;
+                Log.i((String) "App", (String) "Scan unsuccessful");
+                return;
             }
 
         }
@@ -126,36 +132,48 @@ public class ScanActivity extends ActionBarActivity {
         pDialog.setMessage("Loading...");
         pDialog.show();
 
-        JsonArrayRequest strReq = new JsonArrayRequest(Request.Method.POST,
-                AppConfig.URL_REGISTER,new Response.Listener<JSONArray>() {
+
+
+//        JsonObjectRequest strReq = new JsonObjectRequest(Request.Method.POST,
+//                AppConfig.URL_REGISTER,new Response.Listener<JSONObject>() {
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
             @Override
-            public void onResponse(JSONArray response) {
+            public void onResponse(String response) {
                 Log.d("TAG", "barcode: " + barcode);
-                Log.d("TAG", "Login Response: " + response.toString());
+                Log.d("TAG", "Server scan Response: " + response.toString());
 //                hideDialog();
 //                Log.d("RESPONSE", response.toString());
                 hidePDialog();
+//                String jsonResult = inputStreamToString(response).toString();
 
-                for (int i = 0; i < response.length(); i++) {
-                    try {
-                        JSONObject obj = response.getJSONObject(i);
-                        boolean error = obj.getBoolean("error");
+//                for (int i = 0; i < response.length(); i++) {
+                try {
+//                        JSONObject obj = response.getJSONObject(i);
+                    JSONObject obj = new JSONObject(response);
+                    JSONArray jArray = obj.getJSONArray("myArray");
+
+                    boolean error = obj.getBoolean("error");
 
 
-                        // Check for error node in json
-                        if (!error) {
 
-                            ScannedProduct scanInfo = new ScannedProduct();
+                    // Check for error node in json
+                    if (!error) {
+
+                        ScannedProduct scanInfo = new ScannedProduct();
+                        for (int i = 0; i < jArray.length(); i++) {
+                            JSONObject jObj = jArray.getJSONObject(i);
 
 //                        scanInfo.setBarcode(obj.getString("barcode"));
-                           scanInfo.setProductName(obj.getString("name"));
-                           scanInfo.setPrice(Float.parseFloat(obj.getString("price")));
-                           scanInfo.setStoreName(obj.getString("shop"));
+                            scanInfo.setProductName(jObj.getString("name"));
+                            scanInfo.setPrice(Float.parseFloat(jObj.getString("price")));
+                            scanInfo.setStoreName(jObj.getString("shop"));
 
 
-                           productList.add(scanInfo);
-                           // user successfully logged in
-                           // Create login session
+                            productList.add(scanInfo);
+                        }
+                        // user successfully logged in
+                        // Create login session
 
 //                        session.setLogin(true);
 
@@ -163,7 +181,7 @@ public class ScanActivity extends ActionBarActivity {
 //                        Toast.makeText(getApplicationContext(),
 //                                errorMsg, Toast.LENGTH_LONG).show();
 //                        Launch main activity
-                            tvtyp.setText(" success ");
+                        tvtyp.setText(" success ");
 //                        finish();
 //                        startActivity(getIntent());
 
@@ -171,19 +189,20 @@ public class ScanActivity extends ActionBarActivity {
 
 
 
-                        } else {
-                            // Error in login. Get the error message
+                    } else {
+                        // Error in login. Get the error message
 
-                            String errorMsg = obj.getString("error_msg");
-                            tvtyp.setText(" Error: " + errorMsg);
-                            Toast.makeText(getApplicationContext(),
-                                    "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
-                        }
-                    } catch (JSONException e) {
-                        // JSON error
-                        e.printStackTrace();
+                        String errorMsg = obj.getString("error_msg");
+                        tvtyp.setText(" Error: " + errorMsg);
+                        Log.d("TAG", "Scan Response: " + errorMsg);
+//                            Toast.makeText(getApplicationContext(),
+//                                    "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
                     }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
                 }
+//                }
 
             }
         }, new Response.ErrorListener() {
@@ -195,7 +214,6 @@ public class ScanActivity extends ActionBarActivity {
 //                hideDialog();
             }
         }) {
-
             @Override
             protected Map<String, String> getParams() {
                 // Posting parameters to login url
@@ -204,16 +222,29 @@ public class ScanActivity extends ActionBarActivity {
                 params.put("barcode", barcode);
                 return params;
             }
-
         };
 
         // Adding request to request queue
         AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
-
-
-
-
     }
+
+    private StringBuilder inputStreamToString(InputStream is) {
+        String rLine = "";
+        StringBuilder answer = new StringBuilder();
+        BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+
+        try {
+            while ((rLine = rd.readLine()) != null) {
+                answer.append(rLine);
+            }
+        }
+
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return answer;
+    }
+
 
     private void showRegisterDialog() {
 
