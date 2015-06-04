@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -37,7 +38,7 @@ import com.mobeta.android.dslv.SimpleDragSortCursorAdapter;
 import org.w3c.dom.Text;
 
 import pl.pwr.mipo.mipoo.db.ListsDatabaseAdapter;
-import pl.pwr.mipo.mipoo.design.CheckBox;
+
 
 /**
  * Created by CitrusPanc on 4/5/2015.
@@ -90,7 +91,6 @@ public class ProductsActivity extends ActionBarActivity{
 
 
     }
-
 
 
     private void displayProductsList(final long listId) {
@@ -318,7 +318,7 @@ public class ProductsActivity extends ActionBarActivity{
 
             boolean complete;
             final CheckBox cb = (CheckBox) v.findViewById(R.id.completeBox);
-            TextView tv = (TextView) v.findViewById(R.id.item_name);
+            final TextView tv = (TextView) v.findViewById(R.id.item_name);
             final String listName = cursor.getString(cursor
                     .getColumnIndex(ListsDatabaseAdapter.PROD_NAME));
 
@@ -340,8 +340,13 @@ public class ProductsActivity extends ActionBarActivity{
                     Log.d("SMTH", "CLICKED");
                     if(mDbHelper.getProdCompleteById(listId)==1){
                         mDbHelper.updateProductRecord(listId, listName, 0);
+                        tv.setPaintFlags(tv.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+                        tv.setTextColor(getResources().getColor(R.color.material_drawer_primary_text));
                     } else {
                         mDbHelper.updateProductRecord(listId, listName, 1);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                        tv.setTextColor(getResources().getColor(R.color.material_drawer_secondary_text));
+
                     }
                 }
             });
@@ -391,7 +396,7 @@ public class ProductsActivity extends ActionBarActivity{
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                NavUtils.navigateUpTo(this, new Intent(this, ListsActivity.class));
+                NavUtils.navigateUpTo(this, new Intent(this, MainActivity.class));
                 return (true);
             case R.id.add:
                 showDialogView(0, "", false, extraListId);

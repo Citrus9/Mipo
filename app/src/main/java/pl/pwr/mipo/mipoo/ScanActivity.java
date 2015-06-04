@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
@@ -32,6 +33,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,9 +52,12 @@ public class ScanActivity extends ActionBarActivity {
     private TextView tvtyp;
     SessionManager session;
     EditText inputPrice;
+    EditText inputStore;
 
     private View positiveAction;
     private float priceFloat;
+    private String storeString;
+    private String priceString;
 
     private ProgressDialog pDialog;
     private List<ScannedProduct> productList = new ArrayList<ScannedProduct>();
@@ -61,6 +67,7 @@ public class ScanActivity extends ActionBarActivity {
 
     public static final String KEY_LIST = "list";
     public static final String KEY_PRICE = "price";
+    public static final String KEY_STORE = "store";
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
@@ -68,22 +75,9 @@ public class ScanActivity extends ActionBarActivity {
         {
             barcode = scanResult.getContents();
             typ = scanResult.getFormatName();
-//            StringBuilder stringBuilder = new StringBuilder();
-//            Log.i((String) "App", (String) stringBuilder.append("Code = ").append(string).toString());
-//            StringBuilder stringBuilder2 = new StringBuilder();
-//            Log.i((String) "App", (String) stringBuilder2.append("Format = ").append(string2).toString());
-//            TextView textView = (TextView) this.findViewById(2131427405);
-//            TextView textView2 = (TextView) this.findViewById(2131427407);
-//            textView.setText((CharSequence) string);
-//            textView2.setText((CharSequence) string2);
-
             tvbarcode.setText("Barcode " + barcode);
-
-
             checkCode(barcode);
-
             Log.d("SCAN RESULT", "Barcode " + barcode + " Name " + typ);
-
             return;
         }else {
             if (resultCode != 0) return;{
@@ -118,7 +112,6 @@ public class ScanActivity extends ActionBarActivity {
 
         tvbarcode.setText("Barcode " + barcode);
 
-
     }
 
     private void checkCode(final String barcode) {
@@ -151,24 +144,21 @@ public class ScanActivity extends ActionBarActivity {
                 try {
 //                        JSONObject obj = response.getJSONObject(i);
                     JSONObject obj = new JSONObject(response);
-                    JSONArray jArray = obj.getJSONArray("myArray");
-
                     boolean error = obj.getBoolean("error");
-
-
+                    if (!error) {
+                    JSONArray jArray = obj.getJSONArray("product");
 
                     // Check for error node in json
-                    if (!error) {
 
-                        ScannedProduct scanInfo = new ScannedProduct();
+
                         for (int i = 0; i < jArray.length(); i++) {
                             JSONObject jObj = jArray.getJSONObject(i);
-
+                            ScannedProduct scanInfo = new ScannedProduct();
 //                        scanInfo.setBarcode(obj.getString("barcode"));
                             scanInfo.setProductName(jObj.getString("name"));
                             scanInfo.setPrice(Float.parseFloat(jObj.getString("price")));
                             scanInfo.setStoreName(jObj.getString("shop"));
-
+                            scanInfo.setBarcode(Long.parseLong(barcode));
 
                             productList.add(scanInfo);
                         }
@@ -181,14 +171,23 @@ public class ScanActivity extends ActionBarActivity {
 //                        Toast.makeText(getApplicationContext(),
 //                                errorMsg, Toast.LENGTH_LONG).show();
 //                        Launch main activity
+
                         tvtyp.setText(" success ");
 //                        finish();
 //                        startActivity(getIntent());
 
 //                        showAccountDialog(true);
 
+                        for(int i = 0; i < productList.size(); i++){
+                            Log.d("TAG", "My Scanned Response item: " + i + ", details "
+                                    + productList.get(i).getProductName() + " "
+                                    + productList.get(i).getBarcode() + " "
+                                    + productList.get(i).getStoreName() + " "
+                                    + productList.get(i).getPrice() + " "
+                                    + productList.get(i).getProductName());
+                        }
 
-
+                        showDetailsDialog();
                     } else {
                         // Error in login. Get the error message
 
@@ -246,8 +245,7 @@ public class ScanActivity extends ActionBarActivity {
     }
 
 
-    private void showRegisterDialog() {
-
+    private void showDetailsDialog() {
 
         MaterialDialog dialog = new MaterialDialog.Builder(this)
                 .title(R.string.enter_price)
@@ -259,9 +257,17 @@ public class ScanActivity extends ActionBarActivity {
                     public void onPositive(MaterialDialog dialog) {
 
                         priceFloat = Float.parseFloat(inputPrice.getText().toString());
-
+                        storeString = inputStore.getText().toString();
+//                        DecimalFormat precision = new DecimalFormat("0.00");
+                        NumberFormat nf = NumberFormat.getInstance();
+                        nf.setMinimumFractionDigits(2);
+                        nf.setMaximumFractionDigits(2);
+                        String output = nf.format(priceFloat);
+                        priceString = output;
+                        Log.e("TAG", "UKASUKA: " + output);
                         Intent intent = new Intent(ScanActivity.this, ScanResultActivity.class);
-                        intent.putExtra(KEY_PRICE, priceFloat);
+                        intent.putExtra(KEY_PRICE, priceString);
+                        intent.putExtra(KEY_STORE, storeString);
                         intent.putExtra(KEY_LIST, (ArrayList<ScannedProduct>) productList);
                         startActivity(intent);
 
@@ -275,6 +281,7 @@ public class ScanActivity extends ActionBarActivity {
                 }).build();
 
         inputPrice = (EditText) dialog.getCustomView().findViewById(R.id.price);
+        inputStore = (EditText) dialog.getCustomView().findViewById(R.id.store);
 //        inputRegEmail = (EditText) dialog.getCustomView().findViewById(R.id.email);
 //        inputRegPassword = (EditText) dialog.getCustomView().findViewById(R.id.password);
         positiveAction = dialog.getActionButton(DialogAction.POSITIVE);

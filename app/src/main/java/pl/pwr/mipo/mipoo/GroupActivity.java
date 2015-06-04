@@ -44,7 +44,6 @@ import pl.pwr.mipo.mipoo.db.ListsDatabaseAdapter;
 public class GroupActivity extends ActionBarActivity {
 
     private MAdapter mMAdapter;
-    private DrawerView drawer;
     private ActionBarDrawerToggle drawerToggle;
     private ListsDatabaseAdapter mDbHelper;
     private DragSortListView mDslv;
@@ -73,88 +72,9 @@ public class GroupActivity extends ActionBarActivity {
 
         // mDbHelper.insertGroupRecord("Moja grupa");
 
-
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
-        drawer = (DrawerView) findViewById(R.id.drawer);
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        drawerToggle = new ActionBarDrawerToggle(
-                this,
-                drawerLayout,
-                toolbar,
-                R.string.drawer_open,
-                R.string.drawer_close
-        ) {
-
-            public void onDrawerClosed(View view) {
-                invalidateOptionsMenu();
-            }
-
-            public void onDrawerOpened(View drawerView) {
-                invalidateOptionsMenu();
-            }
-        };
-
-//        drawerLayout.setStatusBarBackgroundColor(getResources().getColor(R.color.ColorPrimaryDark));
-        drawerLayout.setDrawerListener(drawerToggle);
-        drawerLayout.closeDrawer(drawer);
-//        drawer.setBackgroundColor(getResources().getColor(R.color.drawer_background));
-        drawer.setDrawerTheme(
-                new DrawerTheme(this)
-                        .setBackgroundColorRes(R.color.white)
-                        .setTextColorPrimaryRes(R.color.input_login)
-                        .setTextColorSecondaryRes(R.color.input_register_hint)
-                        .setHighlightColorRes(R.color.drawer_highlighted)
-        );
-
-        drawer.addItem(new DrawerItem()
-                        .setImage(getResources().getDrawable(R.mipmap.ic_shopping), DrawerItem.SMALL_AVATAR)
-                        .setTextPrimary("Shopping Lists")
-//                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
-        );
-        drawer.addItem(new DrawerItem()
-                        .setImage(getResources().getDrawable(R.mipmap.ic_scan), DrawerItem.SMALL_AVATAR)
-                        .setTextPrimary("Scan")
-//                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
-        );
-        drawer.addItem(new DrawerItem()
-                        .setImage(getResources().getDrawable(R.mipmap.ic_group), DrawerItem.SMALL_AVATAR)
-                        .setTextPrimary("Groups?")
-//                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
-        );
-        drawer.addDivider();
-        drawer.selectItem(0);
-        drawer.setOnItemClickListener(new DrawerItem.OnItemClickListener() {
-            @Override
-            public void onClick(DrawerItem item, long id, int position) {
-                drawer.selectItem(position);
-                if (position == 0) {
-                    Intent i = new Intent(GroupActivity.this, ListsActivity.class);
-                    startActivity(i);
-                }
-                if (position == 1) {
-                    Intent i = new Intent(GroupActivity.this, ScanActivity.class);
-                    startActivity(i);
-                }
-                if (position == 2) {
-                    Intent i = new Intent(GroupActivity.this, GroupActivity.class);
-                    startActivity(i);
-                }
-                Toast.makeText(GroupActivity.this, "Clicked item #" + position, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        drawer.setOnFixedItemClickListener(new DrawerItem.OnItemClickListener() {
-            @Override
-            public void onClick(DrawerItem item, long id, int position) {
-                drawer.selectFixedItem(position);
-
-                Toast.makeText(GroupActivity.this, "Clicked fixed item #" + position, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
 

@@ -1,137 +1,172 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    android:background="#ffecf4ff">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/tvBarcode"
-        android:layout_below="@+id/textView6"
-        android:layout_alignLeft="@+id/textView6"
-        android:layout_alignStart="@+id/textView6"
-        android:layout_toLeftOf="@+id/imgThumbs"
-        android:layout_toStartOf="@+id/imgThumbs" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/tvName"
-        android:layout_below="@+id/textView5"
-        android:layout_alignLeft="@+id/textView5"
-        android:layout_alignStart="@+id/textView5"
-        android:layout_toLeftOf="@+id/space"
-        android:layout_toStartOf="@+id/space"
-        android:maxLines="2"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Product:"
-        android:id="@+id/textView5"
-        android:textColor="#ff256ec9"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Barcode:"
-        android:id="@+id/textView6"
-        android:textColor="#ff256ec9"
-        android:layout_marginTop="10dp"
-        android:layout_below="@+id/tvName"
-        android:layout_alignLeft="@+id/tvName"
-        android:layout_alignStart="@+id/tvName" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="7,99 zł"
-        android:id="@+id/tvPrice"
-        android:textColor="#ff000000"
-        android:layout_below="@+id/textView8"
-        android:layout_alignLeft="@+id/textView8"
-        android:layout_alignStart="@+id/textView8"
-        android:layout_toLeftOf="@+id/imgThumbs"
-        android:layout_toStartOf="@+id/imgThumbs" />
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/imgThumbs"
-        android:layout_alignParentTop="true"
-        android:layout_alignBottom="@+id/tvPrice"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_toRightOf="@+id/tvName"
-        android:layout_toEndOf="@+id/tvName" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Your price:"
-        android:id="@+id/textView8"
-        android:textColor="#ff256ec9"
-        android:layout_below="@+id/tvStore"
-        android:layout_alignLeft="@+id/tvStore"
-        android:layout_alignStart="@+id/tvStore"
-        android:layout_marginTop="10dp"/>
-
-    <Space
-        android:layout_width="20px"
-        android:layout_height="20px"
-        android:id="@+id/space"
-        android:layout_marginRight="137dp"
-        android:layout_marginEnd="137dp"
-        android:layout_alignTop="@+id/tvName"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_width="match_parent"
+        android:minHeight="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:contentInsetStart="72dp" />
 
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/listView"
-        android:layout_alignRight="@+id/imgThumbs"
-        android:layout_alignEnd="@+id/imgThumbs"
         android:layout_marginRight="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginBottom="5dp"
-        android:layout_below="@+id/tvPrice"/>
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/relativeLayout" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Store:"
-        android:id="@+id/textView3"
-        android:textColor="#ff256ec9"
-        android:layout_below="@+id/tvBarcode"
-        android:layout_alignLeft="@+id/tvBarcode"
-        android:layout_alignStart="@+id/tvBarcode"
-        android:layout_marginTop="10dp"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/relativeLayout"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@+id/space2"
+        android:layout_below="@+id/toolbar">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
-        android:id="@+id/tvStore"
-        android:layout_below="@+id/textView3"
-        android:layout_alignLeft="@+id/textView3"
-        android:layout_alignStart="@+id/textView3"
-        android:layout_toLeftOf="@+id/imgThumbs"
-        android:layout_toStartOf="@+id/imgThumbs" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/tvBarcode"
+            android:layout_below="@+id/textView6"
+            android:layout_alignLeft="@+id/textView6"
+            android:layout_alignStart="@+id/textView6"
+            android:layout_toLeftOf="@+id/imgThumbs"
+            android:layout_toStartOf="@+id/imgThumbs" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/tvName"
+            android:layout_below="@+id/textView5"
+            android:layout_alignLeft="@+id/textView5"
+            android:layout_alignStart="@+id/textView5"
+            android:layout_toLeftOf="@+id/space"
+            android:layout_toStartOf="@+id/space"
+            android:maxLines="2"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Product:"
+            android:id="@+id/textView5"
+            android:textColor="#ff256ec9"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Barcode:"
+            android:id="@+id/textView6"
+            android:textColor="#ff256ec9"
+            android:layout_marginTop="10dp"
+            android:layout_below="@+id/tvName"
+            android:layout_alignLeft="@+id/tvName"
+            android:layout_alignStart="@+id/tvName" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="7,99 zł"
+            android:id="@+id/tvPrice"
+            android:textColor="#ff000000"
+            android:layout_below="@+id/textView8"
+            android:layout_alignLeft="@+id/textView8"
+            android:layout_alignStart="@+id/textView8"
+            android:layout_toLeftOf="@+id/imgThumbs"
+            android:layout_toStartOf="@+id/imgThumbs" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imgThumbs"
+            android:layout_alignParentTop="true"
+            android:layout_alignBottom="@+id/tvPrice"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_toRightOf="@+id/tvName"
+            android:layout_toEndOf="@+id/tvName"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Your price:"
+            android:id="@+id/textView8"
+            android:textColor="#ff256ec9"
+            android:layout_below="@+id/tvStore"
+            android:layout_alignLeft="@+id/tvStore"
+            android:layout_alignStart="@+id/tvStore"
+            android:layout_marginTop="10dp"/>
+
+        <Space
+            android:layout_width="20px"
+            android:layout_height="20px"
+            android:id="@+id/space"
+            android:layout_marginRight="137dp"
+            android:layout_marginEnd="137dp"
+            android:layout_alignTop="@+id/tvName"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Store:"
+            android:id="@+id/textView3"
+            android:textColor="#ff256ec9"
+            android:layout_below="@+id/tvBarcode"
+            android:layout_alignLeft="@+id/tvBarcode"
+            android:layout_alignStart="@+id/tvBarcode"
+            android:layout_marginTop="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/tvStore"
+            android:layout_below="@+id/textView3"
+            android:layout_alignLeft="@+id/textView3"
+            android:layout_alignStart="@+id/textView3"
+            android:layout_toLeftOf="@+id/imgThumbs"
+            android:layout_toStartOf="@+id/imgThumbs" />
+
+    </RelativeLayout>
+
+    <Space
+        android:layout_width="fill_parent"
+        android:layout_height="230dp"
+        android:id="@+id/space2"
+        android:layout_below="@+id/toolbar" />
 </RelativeLayout>

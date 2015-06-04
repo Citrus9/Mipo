@@ -7,11 +7,14 @@
     >
 
 
-    <pl.pwr.mipo.mipoo.design.CheckBox
+    <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/completeBox"
-        android:focusable="false"/>
+        android:focusable="false"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:id="@+id/item_name"

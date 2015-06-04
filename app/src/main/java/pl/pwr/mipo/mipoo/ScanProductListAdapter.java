@@ -45,8 +45,6 @@ public class ScanProductListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-
-
         if (inflater == null)
             inflater = (LayoutInflater) activity
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -72,13 +70,13 @@ public class ScanProductListAdapter extends BaseAdapter {
 //        name.setText(m.getProductName());
 
         // store
-        store.setText("When: " + String.valueOf(m.getStoreName()));
+        store.setText(String.valueOf(m.getStoreName()));
 
         // date
 //        date.setText("Where: " + String.valueOf(m.getWhere()));
 
         //price
-        store.setText(String.valueOf(m.getPrice()) + " zł");
+        price.setText(String.valueOf(m.getPrice()) + " zł");
 
         return convertView;
     }

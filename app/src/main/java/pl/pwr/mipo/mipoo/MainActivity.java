@@ -51,10 +51,13 @@ import com.melnykov.fab.FloatingActionButton;
 import com.mobeta.android.dslv.DragSortListView;
 import com.mobeta.android.dslv.SimpleDragSortCursorAdapter;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +67,8 @@ import pl.pwr.mipo.mipoo.app.AppConfig;
 import pl.pwr.mipo.mipoo.app.AppController;
 import pl.pwr.mipo.mipoo.db.ListsDatabaseAdapter;
 import pl.pwr.mipo.mipoo.db.SessionManager;
+import pl.pwr.mipo.mipoo.zxing.IntentIntegrator;
+import pl.pwr.mipo.mipoo.zxing.IntentResult;
 
 
 import com.android.volley.Request.Method;
@@ -92,6 +97,22 @@ public class MainActivity extends ActionBarActivity {
     private EditText inputRegFullName;
     private EditText inputRegEmail;
     private EditText inputRegPassword;
+
+    private float priceFloat;
+    private String storeString;
+    private String priceString;
+
+    EditText inputPrice;
+    EditText inputStore;
+
+    private List<ScannedProduct> productList = new ArrayList<ScannedProduct>();
+
+    private String barcode = null;
+    private String typ = null;
+
+    public static final String KEY_LIST = "list";
+    public static final String KEY_PRICE = "price";
+    public static final String KEY_STORE = "store";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,31 +154,6 @@ public class MainActivity extends ActionBarActivity {
                         .setTextColorSecondaryRes(R.color.input_register_hint)
                         .setHighlightColorRes(R.color.drawer_highlighted)
         );
-//        drawer.addItem(new DrawerItem()
-//                        .setTextPrimary(getString(R.string.drawer_item_home))
-//                        .setTextSecondary(getString(R.string.drawer_item_free_play))
-//        );
-//
-//        drawer.addItem(new DrawerItem()
-//                        .setImage(getResources().getDrawable(R.drawable.ic_add))
-//                        .setTextPrimary(getString(R.string.drawer_item_custom))
-//                        .setTextSecondary(getString(R.string.drawer_item_custom))
-//        );
-//
-//        drawer.addDivider();
-//
-//        drawer.addItem(new DrawerItem()
-//                        .setRoundedImage((BitmapDrawable) getResources().getDrawable(R.drawable.ic_move))
-//                        .setTextPrimary(getString(R.string.drawer_item_section_header))
-//                        .setTextSecondary(getString(R.string.drawer_item_section_header))
-//
-//        );
-
-//        drawer.addItem(new DrawerHeaderItem().setTitle(getString(R.string.drawer_item_contact)));
-//
-//        drawer.addItem(new DrawerItem()
-//                        .setTextPrimary(getString(R.string.drawer_item_open_source))
-//        );
 
         drawer.addItem(new DrawerItem()
                         .setImage(getResources().getDrawable(R.mipmap.ic_shopping), DrawerItem.SMALL_AVATAR)
@@ -180,28 +176,20 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(DrawerItem item, long id, int position) {
                 drawer.selectItem(position);
-                if(position == 1){
-                    Intent i = new Intent(MainActivity.this, ScanActivity.class);
-                    startActivity(i);
+                if (position == 1) {
+
+                    IntentIntegrator intentIntegrator = new IntentIntegrator(MainActivity.this);
+                    intentIntegrator.initiateScan();
+//                    Intent i = new Intent(MainActivity.this, ScanActivity.class);
+//                    startActivity(i);
                 }
-                if(position == 2){
+                if (position == 2) {
                     Intent i = new Intent(MainActivity.this, GroupActivity.class);
                     startActivity(i);
                 }
                 Toast.makeText(MainActivity.this, "Clicked item #" + position, Toast.LENGTH_SHORT).show();
             }
         });
-
-
-//        drawer.addFixedItem(new DrawerItem()
-//                        .setRoundedImage((BitmapDrawable) getResources().getDrawable(R.drawable.photo), DrawerItem.SMALL_AVATAR)
-//                        .setTextPrimary("shit")
-//        );
-
-//        drawer.addFixedItem(new DrawerItem()
-//                        .setImage(getResources().getDrawable(R.mipmap.ic_settings_black_24dp))
-//                        .setTextPrimary(getString(R.string.action_settings))
-//        );
 
         drawer.setOnFixedItemClickListener(new DrawerItem.OnItemClickListener() {
             @Override
@@ -221,13 +209,14 @@ public class MainActivity extends ActionBarActivity {
             // Fetching user details from sqlite
             HashMap<String, String> user = db.getUserDetails();
 
+
             String name = user.get("email");
             String email = user.get("uid");
 
             drawer.addProfile(new DrawerProfile()
                             .setId(1)
 //                            .setRoundedAvatar(new BitmapDrawable (getResources(), generateCircleBitmap(this,getMaterialColor(name), 100, name)))
-                            .setRoundedAvatar(new BitmapDrawable(getResources(), generateCircleBitmap(this, getMaterialColor("temp"), 100, "temp")))
+                            .setRoundedAvatar(new BitmapDrawable(getResources(), generateCircleBitmap(this, getMaterialColor(name), 100, name)))
                             .setBackground(getResources().getDrawable(R.drawable.acc_header))
                             .setName(name)
                             .setDescription(email)
@@ -249,6 +238,8 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+
+
         mDbHelper = ListsDatabaseAdapter.getInstance(getBaseContext());
         mDbHelper.openConnection();
 
@@ -262,6 +253,24 @@ public class MainActivity extends ActionBarActivity {
             }
         });
         fab.show();
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if (scanResult != null)
+        {
+            barcode = scanResult.getContents();
+            typ = scanResult.getFormatName();
+            checkCode(barcode);
+            Log.d("SCAN RESULT", "Barcode " + barcode + " Name " + typ);
+            return;
+        }else {
+            if (resultCode != 0) return;{
+                Log.i((String) "App", (String) "Scan unsuccessful");
+                return;
+            }
+
+        }
     }
 
     private void displayItemList() {
@@ -427,8 +436,8 @@ public class MainActivity extends ActionBarActivity {
             textName = (TextView) dialog.getCustomView().findViewById(R.id.textName);
             textEmail = (TextView) dialog.getCustomView().findViewById(R.id.textEmail);
 
-            imgAvatar.setImageBitmap(generateCircleBitmap(this,getMaterialColor("?"), 200, "?"));
-//            imgAvatar.setImageBitmap(generateCircleBitmap(this,getMaterialColor(name), 100, name));
+//            imgAvatar.setImageBitmap(generateCircleBitmap(this,getMaterialColor("?"), 200, "?"));
+            imgAvatar.setImageBitmap(generateCircleBitmap(this,getMaterialColor(name), 100, name));
             textName.setText(name);
             textEmail.setText(email);
         }
@@ -523,6 +532,74 @@ public class MainActivity extends ActionBarActivity {
         dialog.show(); // disabled by default
     }
 
+    private void showDetailsDialog() {
+
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title(R.string.enter_price)
+                .customView(R.layout.dialog_price, true)
+                .positiveText(R.string.ok)
+                .negativeText(android.R.string.cancel)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+
+                        priceFloat = Float.parseFloat(inputPrice.getText().toString());
+                        storeString = inputStore.getText().toString();
+//                        DecimalFormat precision = new DecimalFormat("0.00");
+                        NumberFormat nf = NumberFormat.getInstance();
+                        nf.setMinimumFractionDigits(2);
+                        nf.setMaximumFractionDigits(2);
+                        String output = nf.format(priceFloat);
+                        priceString = output;
+                        Log.e("TAG", "UKASUKA: " + output);
+                        Intent intent = new Intent(MainActivity.this, ScanResultActivity.class);
+                        intent.putExtra(KEY_PRICE, priceString);
+                        intent.putExtra(KEY_STORE, storeString);
+                        intent.putExtra(KEY_LIST, (ArrayList<ScannedProduct>) productList);
+                        startActivity(intent);
+
+                    }
+
+                    @Override
+                    public void onNegative(MaterialDialog dialog) {
+
+                    }
+
+                }).build();
+
+        inputPrice = (EditText) dialog.getCustomView().findViewById(R.id.price);
+        inputStore = (EditText) dialog.getCustomView().findViewById(R.id.store);
+//        inputRegEmail = (EditText) dialog.getCustomView().findViewById(R.id.email);
+//        inputRegPassword = (EditText) dialog.getCustomView().findViewById(R.id.password);
+        positiveAction = dialog.getActionButton(DialogAction.POSITIVE);
+
+        inputPrice.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                positiveAction.setEnabled(s.toString().trim().length() > 0);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        dialog.show();
+        positiveAction.setEnabled(false); // disabled by default
+
+    }
+
+    private void hidePDialog() {
+        if (pDialog != null) {
+            pDialog.dismiss();
+            pDialog = null;
+        }
+    }
+
     private void checkLogin(final String email, final String password) {
         // Tag used to cancel the request
         String tag_string_req = "req_login";
@@ -545,8 +622,21 @@ public class MainActivity extends ActionBarActivity {
 
                     // Check for error node in json
                     if (!error) {
+
+                        HashMap<String, String> user = db.getUserDetails();
                         // user successfully logged in
                         // Create login session
+
+//                        db.addUser(uid, name, email);
+
+                        String uid = jObj.getString("idUser");
+                        if(!user.get("uid").equals(uid)) {
+//                        JSONObject user1 = jObj.getJSONObject("user");
+                            String name = jObj.getString("login");
+                            String email = jObj.getString("email");
+
+                            db.addUser(uid, name, email);
+                        }
                         session.setLogin(true);
 
 //                        String errorMsg = "Wszystko jest zajebiscie";
@@ -666,6 +756,90 @@ public class MainActivity extends ActionBarActivity {
                 return params;
             }
 
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
+    private void checkCode(final String barcode) {
+        // Tag used to cancel the request
+        String tag_string_req = "req_scan";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "barcode: " + barcode);
+                Log.d("TAG", "Server scan Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        JSONArray jArray = obj.getJSONArray("product");
+
+                        for (int i = 0; i < jArray.length(); i++) {
+                            JSONObject jObj = jArray.getJSONObject(i);
+                            ScannedProduct scanInfo = new ScannedProduct();
+//                        scanInfo.setBarcode(obj.getString("barcode"));
+                            scanInfo.setProductName(jObj.getString("name"));
+                            scanInfo.setPrice(Float.parseFloat(jObj.getString("price")));
+                            scanInfo.setStoreName(jObj.getString("shop"));
+                            scanInfo.setBarcode(Long.parseLong(barcode));
+
+                            productList.add(scanInfo);
+                        }
+
+                        for(int i = 0; i < productList.size(); i++){
+                            Log.d("TAG", "My Scanned Response item: " + i + ", details "
+                                    + productList.get(i).getProductName() + " "
+                                    + productList.get(i).getBarcode() + " "
+                                    + productList.get(i).getStoreName() + " "
+                                    + productList.get(i).getPrice() + " "
+                                    + productList.get(i).getProductName());
+                        }
+
+                        showDetailsDialog();
+                    } else {
+                        // Error in login. Get the error message
+
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Scan Response: " + errorMsg);
+//                            Toast.makeText(getApplicationContext(),
+//                                    "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+//                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        "An error occured " + error.getMessage(), Toast.LENGTH_LONG).show();
+//                hideDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "scan");
+                params.put("barcode", barcode);
+                return params;
+            }
         };
 
         // Adding request to request queue
