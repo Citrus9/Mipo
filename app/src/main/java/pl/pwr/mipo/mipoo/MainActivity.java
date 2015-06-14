@@ -56,6 +56,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.lang.reflect.Array;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,13 +100,17 @@ public class MainActivity extends ActionBarActivity {
     private EditText inputRegPassword;
 
     private float priceFloat;
+    private String nameString;
     private String storeString;
     private String priceString;
 
+    EditText inputName;
     EditText inputPrice;
     EditText inputStore;
 
     private List<ScannedProduct> productList = new ArrayList<ScannedProduct>();
+    private List<MyList> myList = new ArrayList<MyList>();
+    private List<Product> myProds = new ArrayList<Product>();
 
     private String barcode = null;
     private String typ = null;
@@ -165,11 +170,11 @@ public class MainActivity extends ActionBarActivity {
                         .setTextPrimary("Scan")
 //                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
         );
-        drawer.addItem(new DrawerItem()
-                        .setImage(getResources().getDrawable(R.mipmap.ic_group), DrawerItem.SMALL_AVATAR)
-                        .setTextPrimary("Groups?")
-//                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
-        );
+//        drawer.addItem(new DrawerItem()
+//                        .setImage(getResources().getDrawable(R.mipmap.ic_group), DrawerItem.SMALL_AVATAR)
+//                        .setTextPrimary("Groups?")
+////                        .setTextSecondary("photo5 secondary", DrawerItem.THREE_LINE)
+//        );
         drawer.addDivider();
         drawer.selectItem(0);
         drawer.setOnItemClickListener(new DrawerItem.OnItemClickListener() {
@@ -308,6 +313,8 @@ public class MainActivity extends ActionBarActivity {
                 // Get the item name and details from this row in the database.
                 long listId = cursor.getLong(cursor
                         .getColumnIndex(ListsDatabaseAdapter.ITEM_KEY_ROWID));
+                long time = System.currentTimeMillis();
+                android.util.Log.i("Time Class ", " Time value in millisecinds " + time);
                 launchProductsActivity(listId);
 //                launchProductsActivity(listId);
 //				String itemDetails = cursor.getString(cursor
@@ -352,11 +359,18 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
                         if (edit) {
-                            mDbHelper.updateListRecord(listId,
-                                    input.getText().toString());
+//                            if (!mDbHelper.isSyncedList(listId))
+                                mDbHelper.updateListRecord(listId,
+                                        input.getText().toString(), System.currentTimeMillis() + "");
+//                            else {
+//                                mDbHelper.updateListRecord(listId,
+//                                        input.getText().toString(), System.currentTimeMillis() + "");
+//
+//                            }
+
                         } else {
                             mDbHelper.insertListRecord(
-                                    input.getText().toString());
+                                    input.getText().toString(), System.currentTimeMillis() + "");
                         }
                         fab.show();
                         mMAdapter.persistChanges();
@@ -532,6 +546,22 @@ public class MainActivity extends ActionBarActivity {
         dialog.show(); // disabled by default
     }
 
+    private void showAskForLoginDialog(){
+        new MaterialDialog.Builder(this)
+                .content(R.string.login_to_add)
+                .positiveText(R.string.agree)
+                .negativeText(R.string.disagree)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+
+                        showAccountDialog(session.isLoggedIn());
+
+                    }
+                })
+                .show();
+    }
+
     private void showDetailsDialog() {
 
         MaterialDialog dialog = new MaterialDialog.Builder(this)
@@ -543,6 +573,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
 
+
                         priceFloat = Float.parseFloat(inputPrice.getText().toString());
                         storeString = inputStore.getText().toString();
 //                        DecimalFormat precision = new DecimalFormat("0.00");
@@ -551,7 +582,15 @@ public class MainActivity extends ActionBarActivity {
                         nf.setMaximumFractionDigits(2);
                         String output = nf.format(priceFloat);
                         priceString = output;
-                        Log.e("TAG", "UKASUKA: " + output);
+                            ScannedProduct scanInfo = new ScannedProduct();
+                            scanInfo.setPrice(Float.parseFloat(priceString));
+                            scanInfo.setPriceString(priceString);
+                            scanInfo.setStoreName(storeString);
+                            scanInfo.setBarcode(Long.parseLong(barcode));
+                            productList.add(scanInfo);
+                        if (session.isLoggedIn()) {
+                            sendNewPrice(scanInfo);
+                        }
                         Intent intent = new Intent(MainActivity.this, ScanResultActivity.class);
                         intent.putExtra(KEY_PRICE, priceString);
                         intent.putExtra(KEY_STORE, storeString);
@@ -573,23 +612,7 @@ public class MainActivity extends ActionBarActivity {
 //        inputRegPassword = (EditText) dialog.getCustomView().findViewById(R.id.password);
         positiveAction = dialog.getActionButton(DialogAction.POSITIVE);
 
-        inputPrice.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                positiveAction.setEnabled(s.toString().trim().length() > 0);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
         dialog.show();
-        positiveAction.setEnabled(false); // disabled by default
 
     }
 
@@ -598,6 +621,66 @@ public class MainActivity extends ActionBarActivity {
             pDialog.dismiss();
             pDialog = null;
         }
+    }
+
+    private void showAddProductDialog(){
+
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title(R.string.enter_product)
+                .customView(R.layout.dialog_addproduct, true)
+                .positiveText(R.string.ok)
+                .negativeText(android.R.string.cancel)
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+
+                        if (inputName.getText().toString().trim().length() <= 0
+                                || inputPrice.getText().toString().trim().length() <= 0
+                                || inputStore.getText().toString().trim().length() <= 0) {
+                            Toast.makeText(getApplicationContext(),
+                                    "You haven't entered all the data", Toast.LENGTH_LONG).show();
+
+                        } else {
+                            priceFloat = Float.parseFloat(inputPrice.getText().toString());
+                            storeString = inputStore.getText().toString();
+                            nameString = inputName.getText().toString();
+                                NumberFormat nf = NumberFormat.getInstance();
+                                nf.setMinimumFractionDigits(2);
+                                nf.setMaximumFractionDigits(2);
+                                String output = nf.format(priceFloat);
+                            priceString = output;
+                                ScannedProduct scanInfo = new ScannedProduct();
+                                scanInfo.setProductName(nameString);
+                                scanInfo.setPrice(Float.parseFloat(priceString));
+                            scanInfo.setPriceString(priceString);
+                                scanInfo.setStoreName(storeString);
+                                scanInfo.setBarcode(Long.parseLong(barcode));
+                                productList.add(scanInfo);
+                                sendNewProduct(scanInfo);
+
+                            Intent intent = new Intent(MainActivity.this, ScanResultActivity.class);
+                            intent.putExtra(KEY_PRICE, priceString);
+                            intent.putExtra(KEY_STORE, storeString);
+                            intent.putExtra(KEY_LIST, (ArrayList<ScannedProduct>) productList);
+                            startActivity(intent);
+                        }
+
+                    }
+
+                    @Override
+                    public void onNegative(MaterialDialog dialog) {
+
+                    }
+
+                }).build();
+
+        inputName = (EditText) dialog.getCustomView().findViewById(R.id.name);
+        inputPrice = (EditText) dialog.getCustomView().findViewById(R.id.price);
+        inputStore = (EditText) dialog.getCustomView().findViewById(R.id.store);
+//        inputRegEmail = (EditText) dialog.getCustomView().findViewById(R.id.email);
+//        inputRegPassword = (EditText) dialog.getCustomView().findViewById(R.id.password);
+        positiveAction = dialog.getActionButton(DialogAction.POSITIVE);
+        dialog.show();// disabled by default
     }
 
     private void checkLogin(final String email, final String password) {
@@ -630,14 +713,15 @@ public class MainActivity extends ActionBarActivity {
 //                        db.addUser(uid, name, email);
 
                         String uid = jObj.getString("idUser");
-                        if(!user.get("uid").equals(uid)) {
+//                        if(!user.get("uid").equals(uid)) {
 //                        JSONObject user1 = jObj.getJSONObject("user");
                             String name = jObj.getString("login");
                             String email = jObj.getString("email");
 
                             db.addUser(uid, name, email);
-                        }
-                        session.setLogin(true);
+//                        }
+                        session.setLogin(true, uid, name);
+                        Log.d("LOGIN_IUD", uid);
 
 //                        String errorMsg = "Wszystko jest zajebiscie";
 //                        Toast.makeText(getApplicationContext(),
@@ -762,6 +846,10 @@ public class MainActivity extends ActionBarActivity {
         AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
     }
 
+    /**
+     *
+     * @param barcode
+     */
     private void checkCode(final String barcode) {
         // Tag used to cancel the request
         String tag_string_req = "req_scan";
@@ -792,6 +880,7 @@ public class MainActivity extends ActionBarActivity {
 //                        scanInfo.setBarcode(obj.getString("barcode"));
                             scanInfo.setProductName(jObj.getString("name"));
                             scanInfo.setPrice(Float.parseFloat(jObj.getString("price")));
+                            scanInfo.setPriceString(jObj.getString("price"));
                             scanInfo.setStoreName(jObj.getString("shop"));
                             scanInfo.setBarcode(Long.parseLong(barcode));
 
@@ -809,12 +898,22 @@ public class MainActivity extends ActionBarActivity {
 
                         showDetailsDialog();
                     } else {
+                        if (obj.getString("error_msg").equals("Product is not in a db")){
+                            Log.d("TAG", "Well, you got me");
+                            if(session.isLoggedIn()){
+                                showAddProductDialog();
+                            }
+                            else{
+                                showAskForLoginDialog();
+                            }
+                        }
                         // Error in login. Get the error message
-
-                        String errorMsg = obj.getString("error_msg");
-                        Log.d("TAG", "Scan Response: " + errorMsg);
+                        else {
+                            String errorMsg = obj.getString("error_msg");
+                            Log.d("TAG", "Scan Response: " + errorMsg);
 //                            Toast.makeText(getApplicationContext(),
 //                                    "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
+                        }
                     }
                 } catch (JSONException e) {
                     // JSON error
@@ -827,9 +926,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e("TAG", "Server Error: " + error.getMessage());
-                Toast.makeText(getApplicationContext(),
-                        "An error occured " + error.getMessage(), Toast.LENGTH_LONG).show();
-//                hideDialog();
+                hidePDialog();
             }
         }) {
             @Override
@@ -846,13 +943,309 @@ public class MainActivity extends ActionBarActivity {
         AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
     }
 
+    private void sync() {
+        // Tag used to cancel the request
+        String tag_string_req = "req_sync";
+
+
+        pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "Server scan Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        JSONArray jArray1 = obj.getJSONArray("lists");
+                        JSONArray jArray2 = obj.getJSONArray("items");
+
+                        for (int i = 0; i < jArray1.length(); i++) {
+                            JSONObject jObj = jArray1.getJSONObject(i);
+                            MyList l = new MyList(0, "n");
+                            l.setId(Long.parseLong(jObj.getString("idList")));
+                            l.setName(jObj.getString("nameList"));
+
+                            myList.add(l);
+                        }
+
+                        for (int i = 0; i < jArray2.length(); i++) {
+                            JSONObject jObj = jArray2.getJSONObject(i);
+                            Product p = new Product("n", 0, 0, 0);
+                            p.setName(jObj.getString("name"));
+                            p.setListid(Long.parseLong(jObj.getString("idList")));
+                            if(p.getId()!=-1)
+                                myProds.add(p);
+                        }
+
+                        Cursor c = mDbHelper.getAllListRecords();
+                        ArrayList<MyList> dataLists = new ArrayList<MyList>();
+                        if (c != null) {
+                            while (c.moveToNext()) {
+                                MyList l = new MyList(0, "");
+                                l.setId(c.getInt(0));
+                                l.setName(c.getString(1));
+                                dataLists.add(l);
+                            }
+                            c.close();
+                        }
+
+                        Cursor c1 = mDbHelper.getAllProdRecordsByList();
+                        ArrayList<Product> dataProds = new ArrayList<Product>();
+                        if (c1 != null) {
+                            while (c1.moveToNext()) {
+                                Product p = new Product("n", 0, 0, 0);
+                                p.setName(c1.getString(1));
+                                p.setListid(c1.getInt(4));
+                                dataProds.add(p);
+                            }
+                            c1.close();
+                        }
+                        int listCount = 0;
+                        if (dataLists.size() == 0) {
+                            for (int i = 0; i < myList.size(); i++) {
+                                mDbHelper.insertPreListRecord(myList.get(i).getName(), myList.get(i).getId());
+                            }
+                        } else {
+                            for (int i = 0; i < myList.size(); i++) {
+                                for (int j = 0; j < dataLists.size(); j++) {
+                                    if (myList.get(i).getId() != dataLists.get(j).getId()) {
+                                        listCount++;
+                                    }
+                                }
+                            }
+                            if(listCount<=0) {
+                                for (int i = 0; i < myList.size(); i++)
+                                    mDbHelper.insertPreListRecord(myList.get(i).getName(), myList.get(i).getId());
+                            }
+                        }
+
+
+                        int prodCount = 0;
+                        if (dataProds.size() == 0) {
+                            for (int j = 0; j < myProds.size(); j++)
+                                mDbHelper.insertProductRecord(myProds.get(j).getName(), myProds.get(j).getListid(), 0);
+                        } else {
+
+                            for (int i = 0; i < myProds.size(); i++) {
+                                for (int k = 0; k < dataProds.size(); k++) {
+                                    if (myProds.get(i).getName().equals(dataProds.get(k).getName()) &&
+                                            myProds.get(i).getListid() == dataProds.get(k).getListid()) {
+                                        prodCount++;
+                                        Log.d("LOL:", "product:" + myProds.get(i).getName());
+                                    }
+                                }
+                            }
+
+//                                for (int k = 0; k < dataProds.size(); k++) {
+////                                    Log.d("PRODUCTS:", "id:" + dataProds.get(k).getId() + " name:" + dataProds.get(k).getName());
+//                                    if(myProds.get(i).getName().equals(dataProds.get(k).getName())) {
+//                                        Log.d("PRODUCTS_EQUAL_NAME:", "prods:" + myProds.get(i).getName() + " data:" + dataProds.get(k).getName());
+//                                        if (myProds.get(i).getListid() != dataProds.get(k).getListid()) {
+//                                            Log.d("PRODUCTS_NOT_EQUAL_ID:", "prods:" + myProds.get(i).getName() + " data:" + dataProds.get(k).getName());
+//                                            mDbHelper.insertProductRecord(myProds.get(i).getName(), myProds.get(i).getListid(), 0);
+//                                            i++;
+//                                        }
+//                                        else{
+//                                            Log.d("PRODUCTS_EQUAL_ID:", "prods:" + myProds.get(i).getName() + " data:" + dataProds.get(k).getName());
+//                                        }
+//                                    } else {
+//                                        Log.d("PRODS_NAME_NOT_EQUAL:", "prods:" + myProds.get(i).getName() + " data:" + dataProds.get(k).getName());
+//                                        mDbHelper.insertProductRecord(myProds.get(i).getName(), myProds.get(i).getListid(), 0);
+//                                    }
+//                                }
+                            if(prodCount<=0) {
+                                for (int j = 0; j < myProds.size(); j++)
+                                    mDbHelper.insertProductRecord(myProds.get(j).getName(), myProds.get(j).getListid(), 0);
+                            }
+                        }
+
+                        for (int i = 0; i < myList.size(); i++) {
+                            Log.d("TAG", "My Scanned Response item: " + i + ", details "
+                                    + myList.get(i).getId() + " "
+                                    + myList.get(i).getName());
+                        }
+                        displayItemList();
+
+                    }else{
+
+                            String errorMsg = obj.getString("error_msg");
+                            Log.d("TAG", "Scan Response: " + errorMsg);
+//                            Toast.makeText(getApplicationContext(),
+//                                    "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
+
+                    }
+
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        "An error occured " + error.getMessage(), Toast.LENGTH_LONG).show();
+//                hideDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "sync");
+                Log.d("LOGIN", session.getUserLogged());
+                params.put("idUser", session.getUserLogged());
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
+    private void sendNewProduct(final ScannedProduct sc) {
+        // Tag used to cancel the request
+        String tag_string_req = "req_newproduct";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        final String newName = sc.getProductName();
+        final float newPrice = sc.getPrice();
+        final String newPriceString = sc.getPriceString();
+        final String newStore = sc.getStoreName();
+
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "barcode: " + barcode);
+                Log.d("TAG", "Server scan Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        Log.d("TAG", "Success");
+                    } else {
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Scan Response: " + errorMsg);
+//                      Toast.makeText(getApplicationContext(),
+//                            "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
+
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        "An error occured " + error.getMessage(), Toast.LENGTH_LONG).show();
+//                hideDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "addProduct");
+                params.put("barcode", barcode);
+                params.put("idUser", session.getUserLogged());
+                params.put("shop", newStore);
+                params.put("price", newPriceString);
+                params.put("name", newName);
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
+    private void sendNewPrice(final ScannedProduct sc) {
+        // Tag used to cancel the request
+        String tag_string_req = "req_newprice";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        final String newName = sc.getProductName();
+        final float newPrice = sc.getPrice();
+        final String newPriceString = sc.getPriceString();
+        final String newStore = sc.getStoreName();
+        Log.d("LOG_ADD_PRICE", "UID: " + session.getUserLogged());
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "barcode: " + barcode);
+                Log.d("TAG", "Server scan Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        Log.d("TAG", "Success");
+                    } else {
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Scan Response: " + errorMsg);
+//                      Toast.makeText(getApplicationContext(),
+//                            "An error occured " + errorMsg, Toast.LENGTH_LONG).show();
+
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        "An error occured " + error.getMessage(), Toast.LENGTH_LONG).show();
+//                hideDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "addPrice");
+                params.put("barcode", barcode);
+                params.put("idUser", session.getUserLogged());
+                params.put("shop", newStore);
+                params.put("price", newPriceString);
+
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
     private void launchProductsActivity(Long id) {
         Intent i = new Intent(this, ProductsActivity.class);
         Log.d("putExtra", "ID: " + id);
-//        i.putExtra(ItemAddEditActivity.EDIT_ITEM, "edit");
         i.putExtra(ListsDatabaseAdapter.ITEM_KEY_ROWID, id);
         startActivity(i);
-//        overridePendingTransition(R.anim.abc_fade_in, R.anim.abc_fade_in);
     }
 
     private DragSortListView.DragScrollProfile ssProfile = new DragSortListView.DragScrollProfile() {
@@ -876,11 +1269,11 @@ public class MainActivity extends ActionBarActivity {
                 if (listPos == REMOVED) {
                     mDbHelper
                             .deleteListRecord(c.getInt(c.getColumnIndex("_id")));
-                    persistChanges();
+//                    persistChanges();
                 } else if (listPos != c.getPosition()) {
                     mDbHelper.updateListPosition(
                             c.getInt(c.getColumnIndex("_id")), listPos);
-
+//                    persistChanges();
                 }
             }
         }
@@ -902,6 +1295,13 @@ public class MainActivity extends ActionBarActivity {
             ImageView img = (ImageView) v.findViewById(R.id.imageView);
             TextView tv = (TextView) v.findViewById(R.id.item_name);
             String name = tv.getText().toString();
+            ImageView imgSync = (ImageView) v.findViewById(R.id.imageViewSync);
+            if(mDbHelper.isSyncedList(listId)){
+                imgSync.setVisibility(View.VISIBLE);
+            }
+            else{
+                imgSync.setVisibility(View.INVISIBLE);
+            }
             img.setImageBitmap(generateCircleBitmap(MainActivity.this,getMaterialColor(listId), 100, name));
 
             return v;
@@ -978,7 +1378,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void logoutUser() {
-        session.setLogin(false);
+        session.setLogout(false);
 
         db.deleteUsers();
 
@@ -1007,6 +1407,15 @@ public class MainActivity extends ActionBarActivity {
 //                startActivity(i);
 //                break;
 //        }
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_synch) {
+            mMAdapter.persistChanges();
+            sync();
+            displayItemList();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }

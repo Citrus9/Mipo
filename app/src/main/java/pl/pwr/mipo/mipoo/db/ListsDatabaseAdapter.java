@@ -31,12 +31,14 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 	private SQLiteDatabase mDb;
 
 	private static final String DATABASE_NAME = "lists";
-	private static final int SCHEMA_VERSION = 6; //bez tablicy groupMembers  i groupList
+	private static final int SCHEMA_VERSION = 11; //bez tablicy groupMembers  i groupList
 
 	public static final String ITEM_KEY_ROWID = "_id";
 	public static final String ITEM_TABLE = "list_table";
 	public static final String ITEM_NAME = "list_name";
 	public static final String ITEM_POSITION = "list_position";
+    public static final String ITEM_CREATION_DATE = "list_creation_date";
+    public static final String ITEM_SYNCRONIZED = "list_sync";
 
     public static final String PROD_KEY_ROWID = "_id";
     public static final String PROD_TABLE = "product_table";
@@ -75,7 +77,9 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
             "CREATE TABLE " + ITEM_TABLE + " (" +
                     ITEM_KEY_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     ITEM_NAME +" TEXT, " +
-                    ITEM_POSITION +" INTEGER);";
+                    ITEM_POSITION +" INTEGER, " +
+                    ITEM_CREATION_DATE + " text, " +
+                    ITEM_SYNCRONIZED + " INTEGER);";
 
     private static final String DATABASE_CREATE_PRODUCTS =
             "CREATE TABLE " + PROD_TABLE+ " (" +
@@ -162,8 +166,8 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 		mDb.execSQL("DROP TABLE IF EXISTS " + ITEM_TABLE);
         mDb.execSQL("DROP TABLE IF EXISTS " + PROD_TABLE);
         mDb.execSQL("DROP TABLE IF EXISTS " + TABLE_LOGIN);
-        mDb.execSQL("DROP TABLE IF EXISTS" + GROUP_TABLE);
-        mDb.execSQL("DROP TABLE IF EXISTS" + GROUPMembers_TABLE);
+        mDb.execSQL("DROP TABLE IF EXISTS " + GROUP_TABLE);
+        mDb.execSQL("DROP TABLE IF EXISTS " + GROUPMembers_TABLE);
 		onCreate(mDb);
 	}
 
@@ -239,7 +243,7 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 	// Methods for Items
 
 	public Cursor getAllListRecords() {
-		return mDb.query(ITEM_TABLE, new String[] {ITEM_KEY_ROWID, ITEM_NAME, ITEM_POSITION }, null, null, null, null,
+		return mDb.query(ITEM_TABLE, new String[] {ITEM_KEY_ROWID, ITEM_NAME, ITEM_POSITION, ITEM_CREATION_DATE , ITEM_SYNCRONIZED }, null, null, null, null,
 				ITEM_POSITION + " " + sort_order);
 	}
 
@@ -258,9 +262,15 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
                 PROD_POSITION + " " + sort_order);
     }
 
+    public Cursor getAllProdRecordsByList() {
+        return mDb.query(PROD_TABLE, new String[] {PROD_KEY_ROWID, PROD_NAME, PROD_POSITION, PROD_COMPLETE, PROD_LIST_ID },
+                null, null, null, null,
+                PROD_POSITION + " " + sort_order);
+    }
+
 	public Cursor getListRecord(long rowId) throws SQLException {
         Cursor mLetterCursor = mDb.query(true, ITEM_TABLE, new String[] {
-                        ITEM_KEY_ROWID, ITEM_NAME, ITEM_POSITION },
+                        ITEM_KEY_ROWID, ITEM_NAME, ITEM_POSITION, ITEM_CREATION_DATE, ITEM_SYNCRONIZED },
                 ITEM_KEY_ROWID + "=" + rowId, null, null, null, null, null);
         if (mLetterCursor != null) {
             mLetterCursor.moveToFirst();
@@ -278,14 +288,27 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
         return mLetterCursor;
     }
 
-	public long insertListRecord(String item_name) {
+	public long insertListRecord(String item_name, String timemillis) {
         int item_Position = getMaxColumnData();
 		ContentValues initialItemValues = new ContentValues();
 		initialItemValues.put(ITEM_NAME, item_name);
+        initialItemValues.put(ITEM_CREATION_DATE, timemillis);
 		initialItemValues.put(ITEM_POSITION, (item_Position + 1));
+        initialItemValues.put(ITEM_SYNCRONIZED, 0);
 
 		return mDb.insert(ITEM_TABLE, null, initialItemValues);
 	}
+
+    public long insertPreListRecord(String item_name, long id) {
+        int item_Position = getMaxColumnData();
+        ContentValues initialItemValues = new ContentValues();
+        initialItemValues.put(ITEM_KEY_ROWID, id);
+        initialItemValues.put(ITEM_NAME, item_name);
+        initialItemValues.put(ITEM_POSITION, (item_Position + 1));
+        initialItemValues.put(ITEM_SYNCRONIZED, 1);
+
+        return mDb.insert(ITEM_TABLE, null, initialItemValues);
+    }
 
     public long insertUserRecord(String name){
         ContentValues initialItemValues = new ContentValues();
@@ -328,9 +351,10 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
         return mDb.delete(PROD_TABLE, PROD_KEY_ROWID + "=" + rowId, null) > 0;
     }
 
-    public boolean updateListRecord(long rowId, String item_name) {
+    public boolean updateListRecord(long rowId, String item_name, String timemillis) {
 		ContentValues ItemArgs = new ContentValues();
 		ItemArgs.put(ITEM_NAME, item_name);
+        ItemArgs.put(ITEM_CREATION_DATE, timemillis);
 		return mDb.update(ITEM_TABLE, ItemArgs, ITEM_KEY_ROWID + "=" + rowId,
 				null) > 0;
 	}
@@ -415,9 +439,17 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
     public int getMaxProductPosition(long list_id) {
 
         final SQLiteStatement stmt = mDb
-                .compileStatement("SELECT MAX("+PROD_POSITION+") FROM "+PROD_TABLE + " WHERE " + PROD_LIST_ID + " = " + list_id);
+                .compileStatement("SELECT MAX(" + PROD_POSITION + ") FROM " + PROD_TABLE + " WHERE " + PROD_LIST_ID + " = " + list_id);
 
         return (int) stmt.simpleQueryForLong();
+    }
+
+    public boolean isSyncedList(long list_id) {
+
+        final SQLiteStatement stmt = mDb
+                .compileStatement("SELECT "+ITEM_SYNCRONIZED+" FROM "+ITEM_TABLE + " WHERE " + ITEM_KEY_ROWID + " = " +list_id);
+
+        return (long) stmt.simpleQueryForLong()>0 ? true : false;
     }
 
     public String getListNameById(long list_id) {
@@ -455,6 +487,14 @@ public class ListsDatabaseAdapter extends SQLiteOpenHelper {
 
         final SQLiteStatement stmt = mDb
                 .compileStatement("SELECT " + PROD_NAME + " FROM " + PROD_TABLE + " WHERE " + PROD_KEY_ROWID + " = " + prod_id);
+
+        return (String) stmt.simpleQueryForString();
+    }
+
+    public String getProdNameByIdAndPos(long list_id, long pos) {
+
+        final SQLiteStatement stmt = mDb
+                .compileStatement("SELECT " + PROD_NAME + " FROM " + PROD_TABLE + " WHERE " + PROD_LIST_ID + " = " + list_id + " AND " + PROD_KEY_ROWID + " = " + pos);
 
         return (String) stmt.simpleQueryForString();
     }

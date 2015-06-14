@@ -14,6 +14,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Created by CitrusPanc on 5/16/2015.
@@ -46,9 +48,9 @@ public class ScanResultActivity extends ActionBarActivity {
         ListView lv = (ListView) findViewById(R.id.listView);
 
         mExtras = getIntent().getExtras();
-        sproducts = (ArrayList<ScannedProduct>) getIntent().getSerializableExtra(ScanActivity.KEY_LIST);
-        yourPrice = mExtras.getString(ScanActivity.KEY_PRICE);
-        yourStore = mExtras.getString(ScanActivity.KEY_STORE);
+        sproducts = (ArrayList<ScannedProduct>) getIntent().getSerializableExtra(MainActivity.KEY_LIST);
+        yourPrice = mExtras.getString(MainActivity.KEY_PRICE);
+        yourStore = mExtras.getString(MainActivity.KEY_STORE);
 
         for(int i = 0; i < sproducts.size(); i++){
             Log.d("SCAN_RESULT", "My Scanned Response item: " + i + ", details "
@@ -67,7 +69,7 @@ public class ScanResultActivity extends ActionBarActivity {
         avgPrice = allPrices/amountOfProducts;
         Float price = Float.parseFloat(yourPrice);
 
-        if(avgPrice > price){
+        if(avgPrice >= price){
             imgThumbs.setImageResource(R.drawable.thumbs_up);
         }
         else{
@@ -79,8 +81,11 @@ public class ScanResultActivity extends ActionBarActivity {
         tvStore.setText(yourStore);
         tvPrice.setText("" + yourPrice + " zl");
 
+
+
+        Collections.sort(sproducts, StringAscComparator);
         adapter = new ScanProductListAdapter(this, sproducts);
-        lv.setAdapter(adapter);
+
         lv.setAdapter(adapter);
 
     }
@@ -100,5 +105,16 @@ public class ScanResultActivity extends ActionBarActivity {
         }
         return (super.onOptionsItemSelected(item));
     }
+
+    public static Comparator<ScannedProduct> StringAscComparator = new Comparator<ScannedProduct>() {
+
+        public int compare(ScannedProduct app1, ScannedProduct app2) {
+
+            String stringName1 = app1.getPriceString();
+            String stringName2 = app2.getPriceString();
+
+            return stringName1.compareToIgnoreCase(stringName2);
+        }
+    };
 
 }

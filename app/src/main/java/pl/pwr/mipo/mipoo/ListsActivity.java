@@ -160,11 +160,12 @@ public class ListsActivity extends ActionBarActivity {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
                         if (edit) {
+
                             mDbHelper.updateListRecord(listId,
-                                    input.getText().toString());
+                                    input.getText().toString(), System.currentTimeMillis()+"");
                         } else {
                             mDbHelper.insertListRecord(
-                                    input.getText().toString());
+                                    input.getText().toString(), System.currentTimeMillis()+"");
                         }
                         fab.show();
                         mMAdapter.persistChanges();

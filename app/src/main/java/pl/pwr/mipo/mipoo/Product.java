@@ -8,12 +8,13 @@ public class Product {
     private long id;
     private String name;
     private int complete;
+    private long listid;
     private int position;
 
-    public Product(long id, String name, int complete, int position) {
-        this.id = id;
+    public Product( String name, int complete, long listid, int position) {
         this.name = name;
         this.complete = complete;
+        this.listid = listid;
         this.position = position;
     }
 
@@ -39,6 +40,14 @@ public class Product {
 
     public void setComplete(int complete) {
         this.complete = complete;
+    }
+
+    public long getListid() {
+        return listid;
+    }
+
+    public void setListid(long listid) {
+        this.listid = listid;
     }
 
     public int getPosition() {

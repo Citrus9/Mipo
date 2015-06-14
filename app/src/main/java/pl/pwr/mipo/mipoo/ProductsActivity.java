@@ -1,5 +1,6 @@
 package pl.pwr.mipo.mipoo;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,14 +30,25 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.melnykov.fab.FloatingActionButton;
 import com.mobeta.android.dslv.DragSortCursorAdapter;
 import com.mobeta.android.dslv.DragSortListView;
 import com.mobeta.android.dslv.ResourceDragSortCursorAdapter;
 import com.mobeta.android.dslv.SimpleDragSortCursorAdapter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import pl.pwr.mipo.mipoo.app.AppConfig;
+import pl.pwr.mipo.mipoo.app.AppController;
 import pl.pwr.mipo.mipoo.db.ListsDatabaseAdapter;
 
 
@@ -53,6 +65,9 @@ public class ProductsActivity extends ActionBarActivity{
     private CheckBox inputBox;
     private View positiveAction;
     private long extraListId;
+    private boolean isSync;
+
+    private ProgressDialog pDialog;
 
     private FloatingActionButton fab;
 
@@ -77,6 +92,8 @@ public class ProductsActivity extends ActionBarActivity{
 
         extraListId = mExtras.getLong(ListsDatabaseAdapter.ITEM_KEY_ROWID);
         displayProductsList(extraListId);
+
+        isSync = mDbHelper.isSyncedList(extraListId);
 
 //        getActionBar().setTitle(mDbHelper.getListNameById(extraListId));
 
@@ -131,9 +148,19 @@ public class ProductsActivity extends ActionBarActivity{
 
                 String listName = cursor.getString(cursor
                         .getColumnIndex(ListsDatabaseAdapter.PROD_NAME));
-                if(mDbHelper.getProdCompleteById(prodId)== 1)
+
+                if(mDbHelper.getProdCompleteById(prodId)== 1) {
+                    if(isSync)
+                        crossProduct(extraListId,listName, 0);
                     mDbHelper.updateProductRecord(prodId, listName, 0);
-                else mDbHelper.updateProductRecord(prodId, listName, 1);
+
+                }
+                else {
+                    if(isSync)
+                        crossProduct(extraListId, listName, 1);
+                    mDbHelper.updateProductRecord(prodId, listName, 1);
+
+                }
 
 //                mMAdapter.persistChanges();
 //                displayProductsList(listId);
@@ -184,8 +211,11 @@ public class ProductsActivity extends ActionBarActivity{
                             mDbHelper.updateProductRecord(prodId,
                                     inputName.getText().toString(), complete);
                         } else {
+
                             mDbHelper.insertProductRecord(
                                     inputName.getText().toString(), listId, complete);
+                            if(isSync)
+                                addProduct(extraListId, inputName.getText().toString(),complete);
                         }
                         mMAdapter.persistChanges();
                         displayProductsList(extraListId);
@@ -222,6 +252,171 @@ public class ProductsActivity extends ActionBarActivity{
         dialog.show(); // disabled by default
     }
 
+    private void deleteProduct(final long id, final String name) {
+        // Tag used to cancel the request
+        String tag_string_req = "req_delete";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        pDialog = new ProgressDialog(ProductsActivity.this);
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "Server delete Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        Log.d("TAG", "Item successfuly deleted");
+                    } else {
+                        // Error
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Delete Response: " + errorMsg);
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                hidePDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "delete");
+                params.put("idList", id + "");
+                params.put("name", name);
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
+    private void addProduct(final long id, final String name, final int isBought) {
+        String tag_string_req = "req_add";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        pDialog = new ProgressDialog(ProductsActivity.this);
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "Server add Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        Log.d("TAG", "Item successfuly added");
+                    } else {
+                        // Error
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Add Response: " + errorMsg);
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                hidePDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "addItem");
+                params.put("idList", id + "");
+                params.put("name", name);
+                params.put("bought", isBought + "");
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
+    private void crossProduct(final long id, final String name, final int isBought) {
+        String tag_string_req = "req_add";
+
+//        pDialog.setMessage("Logging in ...");
+//        showDialog();
+
+        pDialog = new ProgressDialog(ProductsActivity.this);
+        pDialog.setMessage("Loading...");
+        pDialog.show();
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_REGISTER, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("TAG", "Server cross Response: " + response.toString());
+                hidePDialog();
+                try {
+                    JSONObject obj = new JSONObject(response);
+                    boolean error = obj.getBoolean("error");
+                    if (!error) {
+                        Log.d("TAG", "Item successfuly crossed");
+                    } else {
+                        // Error
+                        String errorMsg = obj.getString("error_msg");
+                        Log.d("TAG", "Cross Response: " + errorMsg);
+                    }
+                } catch (JSONException e) {
+                    // JSON error
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", "Server Error: " + error.getMessage());
+                hidePDialog();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("tag", "cross");
+                params.put("idList", id + "");
+                params.put("name", name);
+                params.put("bought", isBought + "");
+                return params;
+            }
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+    }
+
     private class MAdapter extends SimpleDragSortCursorAdapter {
 
         public void persistChanges() {
@@ -230,8 +425,11 @@ public class ProductsActivity extends ActionBarActivity{
             while (c.moveToNext()) {
                 int listPos = getListPosition(c.getPosition());
                 if (listPos == REMOVED) {
+                    if(isSync)
+                        deleteProduct(extraListId, mDbHelper.getProdNameById(c.getInt(c.getColumnIndex("_id"))));
                     mDbHelper
                             .deleteProductRecord(c.getInt(c.getColumnIndex("_id")));
+
                 } else if (listPos != c.getPosition()) {
                     mDbHelper.updateProductPosition(
                             c.getInt(c.getColumnIndex("_id")), listPos);
@@ -244,69 +442,6 @@ public class ProductsActivity extends ActionBarActivity{
             super(ctxt, rmid, c, cols, ids, something);
             mContext = ctxt;
         }
-//        public MAdapter(Context ctxt, Cursor c, int flags) {
-//            super(ctxt, flags, c);
-////            mContext = ctxt;
-//        }
-
-//        @Override
-//        public View getView(final int position, View convertView, ViewGroup parent) {
-//            ViewHolder holder = null;
-//            Log.v("ConvertView", String.valueOf(position));
-//
-//            Cursor cursor = (Cursor) listView.getItemAtPosition(position);
-//
-//            // Get the item name and details from this row in the database.
-//            long prodId = cursor.getLong(cursor
-//                    .getColumnIndex(ListsDatabaseAdapter.PROD_KEY_ROWID));
-//
-//            if (convertView == null) {
-//                LayoutInflater vi = (LayoutInflater) getSystemService(
-//                        Context.LAYOUT_INFLATER_SERVICE);
-//                convertView = vi.inflate(R.layout.product_items, null);
-//
-//                holder = new ViewHolder();
-//                holder.prodName = (TextView) convertView.findViewById(R.id.item_name);
-//                holder.prodPos = (TextView) convertView.findViewById(R.id.item_position_list);
-//                holder.completeBox = (CheckBox) convertView.findViewById(R.id.completeBox);
-//                convertView.setTag(holder);
-//
-//
-//                if (mDbHelper.getProdCompleteById(mDbHelper.getProdIdByPos(position, extraListId)) == 1) {
-//                    System.out.println(mDbHelper.getProdCompleteById(mDbHelper.getProdIdByPos(position, extraListId)));
-//                    holder.completeBox.setChecked(true);
-//                }
-//                else {
-//                    System.out.println(mDbHelper.getProdCompleteById(mDbHelper.getProdIdByPos(position, extraListId)));
-//                    holder.completeBox.setChecked(false);
-//                }
-//
-//                holder.completeBox.setOnClickListener(new View.OnClickListener() {
-//                    public void onClick(View v) {
-//                        Log.d("нажалась хуйня", "вот такая хуйня");
-//
-////                        if(mDbHelper.getProdCompleteById(prodId)== 1)
-////                            mDbHelper.updateProductRecord(prodId, listName, 0);
-////                        else mDbHelper.updateProductRecord(prodId, listName, 1);
-//
-//                        if (mDbHelper.getProdCompleteById(mDbHelper.getProdIdByPos(position, extraListId)) == 1) {
-//                            ((CheckBox) v).setChecked(false);
-//                            mDbHelper.updateProductRecord(mDbHelper.getProdIdByPos(position, extraListId),
-//                                    mDbHelper.getProdNameById(mDbHelper.getProdIdByPos(position, extraListId)), 0);
-//                        } else {
-//                            ((CheckBox) v).setChecked(true);
-//                            mDbHelper.updateProductRecord(mDbHelper.getProdIdByPos(position, extraListId),
-//                                    mDbHelper.getProdNameById(mDbHelper.getProdIdByPos(position, extraListId)), 1);
-//                        }
-//                    }
-//                });
-//
-////                holder.prodName.setText(mDbHelper.getProdNameById(mDbHelper.getProdIdByPos(position, extraListId)));
-////                holder.prodPos.setText(mDbHelper.getProdCompleteById(mDbHelper.getProdIdByPos(position, extraListId)));
-//            } else {
-//                holder = (ViewHolder) convertView.getTag();
-//            }
-//        }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -336,17 +471,20 @@ public class ProductsActivity extends ActionBarActivity{
             cb.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(ProductsActivity.this,"Item bought " + mDbHelper.getProdCompleteById(listId), Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(ProductsActivity.this, "Item bought " + mDbHelper.getProdCompleteById(listId), Toast.LENGTH_SHORT).show();
                     Log.d("SMTH", "CLICKED");
-                    if(mDbHelper.getProdCompleteById(listId)==1){
+                    if (mDbHelper.getProdCompleteById(listId) == 1) {
                         mDbHelper.updateProductRecord(listId, listName, 0);
                         tv.setPaintFlags(tv.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
                         tv.setTextColor(getResources().getColor(R.color.material_drawer_primary_text));
+                        if(isSync)
+                            crossProduct(listId, listName, 0);
                     } else {
                         mDbHelper.updateProductRecord(listId, listName, 1);
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                         tv.setTextColor(getResources().getColor(R.color.material_drawer_secondary_text));
-
+                        if(isSync)
+                            crossProduct(listId, listName, 1);
                     }
                 }
             });
@@ -423,8 +561,16 @@ public class ProductsActivity extends ActionBarActivity{
     protected void onDestroy(){
         super.onDestroy();
         Log.d("CURSOR", "OnDestroy()");
-        mMAdapter.persistChanges();
+//        mMAdapter.persistChanges();
     }
+
+    private void hidePDialog() {
+        if (pDialog != null) {
+            pDialog.dismiss();
+            pDialog = null;
+        }
+    }
+
 
 }
 

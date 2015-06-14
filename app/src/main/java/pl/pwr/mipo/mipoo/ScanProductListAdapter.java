@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -76,7 +77,7 @@ public class ScanProductListAdapter extends BaseAdapter {
 //        date.setText("Where: " + String.valueOf(m.getWhere()));
 
         //price
-        price.setText(String.valueOf(m.getPrice()) + " zł");
+        price.setText(String.valueOf(m.getPriceString()) + " zł");
 
         return convertView;
     }
