@@ -967,7 +967,7 @@ public class MainActivity extends ActionBarActivity {
 
                         for (int i = 0; i < jArray1.length(); i++) {
                             JSONObject jObj = jArray1.getJSONObject(i);
-                            MyList l = new MyList(0, "n");
+                            MyList l = new MyList(0, "n", 0);
                             l.setId(Long.parseLong(jObj.getString("idList")));
                             l.setName(jObj.getString("nameList"));
 
@@ -976,7 +976,7 @@ public class MainActivity extends ActionBarActivity {
 
                         for (int i = 0; i < jArray2.length(); i++) {
                             JSONObject jObj = jArray2.getJSONObject(i);
-                            Product p = new Product("n", 0, 0, 0);
+                            Product p = new Product("n", 0, 0, 0, 0);
                             p.setName(jObj.getString("name"));
                             p.setListid(Long.parseLong(jObj.getString("idList")));
                             if(p.getId()!=-1)
@@ -987,7 +987,7 @@ public class MainActivity extends ActionBarActivity {
                         ArrayList<MyList> dataLists = new ArrayList<MyList>();
                         if (c != null) {
                             while (c.moveToNext()) {
-                                MyList l = new MyList(0, "");
+                                MyList l = new MyList(0, "", 0);
                                 l.setId(c.getInt(0));
                                 l.setName(c.getString(1));
                                 dataLists.add(l);
@@ -999,7 +999,7 @@ public class MainActivity extends ActionBarActivity {
                         ArrayList<Product> dataProds = new ArrayList<Product>();
                         if (c1 != null) {
                             while (c1.moveToNext()) {
-                                Product p = new Product("n", 0, 0, 0);
+                                Product p = new Product("n", 0, 0, 0, 0);
                                 p.setName(c1.getString(1));
                                 p.setListid(c1.getInt(4));
                                 dataProds.add(p);
@@ -1014,15 +1014,15 @@ public class MainActivity extends ActionBarActivity {
                         } else {
                             for (int i = 0; i < myList.size(); i++) {
                                 for (int j = 0; j < dataLists.size(); j++) {
-                                    if (myList.get(i).getId() != dataLists.get(j).getId()) {
-                                        listCount++;
+                                    if (myList.get(i).getId() == dataLists.get(j).getId()) {
+                                        myList.get(i).setCount(1);
                                     }
                                 }
                             }
-                            if(listCount<=0) {
-                                for (int i = 0; i < myList.size(); i++)
+                            for (int i = 0; i < myList.size(); i++)
+                                if(myList.get(i).getCount()<=0)
                                     mDbHelper.insertPreListRecord(myList.get(i).getName(), myList.get(i).getId());
-                            }
+
                         }
 
 
@@ -1036,7 +1036,7 @@ public class MainActivity extends ActionBarActivity {
                                 for (int k = 0; k < dataProds.size(); k++) {
                                     if (myProds.get(i).getName().equals(dataProds.get(k).getName()) &&
                                             myProds.get(i).getListid() == dataProds.get(k).getListid()) {
-                                        prodCount++;
+                                            myProds.get(i).setCount(1);
                                         Log.d("LOL:", "product:" + myProds.get(i).getName());
                                     }
                                 }
@@ -1059,10 +1059,11 @@ public class MainActivity extends ActionBarActivity {
 //                                        mDbHelper.insertProductRecord(myProds.get(i).getName(), myProds.get(i).getListid(), 0);
 //                                    }
 //                                }
-                            if(prodCount<=0) {
-                                for (int j = 0; j < myProds.size(); j++)
+
+                            for (int j = 0; j < myProds.size(); j++)
+                                if(myProds.get(j).getCount()<=0)
                                     mDbHelper.insertProductRecord(myProds.get(j).getName(), myProds.get(j).getListid(), 0);
-                            }
+
                         }
 
                         for (int i = 0; i < myList.size(); i++) {
