@@ -20,12 +20,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            android:theme="@style/HoloTheme"
         </activity>
 
 
         <activity android:name=".ListsActivity"></activity>
         <activity
-            android:name=".ProductsActivity"></activity>
+            android:name=".ProductsActivity">
+            android:theme="@style/HoloTheme"
+        </activity>
             <!--android:parentActivityName=".MainActivity" >-->
         <!--<activity-->
             <!--android:name=".MainActivity"-->

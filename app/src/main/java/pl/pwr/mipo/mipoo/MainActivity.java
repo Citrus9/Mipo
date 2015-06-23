@@ -574,18 +574,22 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onPositive(MaterialDialog dialog) {
 
-
-                        priceFloat = Float.parseFloat(inputPrice.getText().toString());
+                        String myFloat = inputPrice.getText().toString().replace(",", ".");
+                        priceFloat = Float.parseFloat(myFloat);
                         storeString = inputStore.getText().toString();
 //                        DecimalFormat precision = new DecimalFormat("0.00");
                         NumberFormat nf = NumberFormat.getInstance();
                         nf.setMinimumFractionDigits(2);
                         nf.setMaximumFractionDigits(2);
                         String output = nf.format(priceFloat);
-                        DecimalFormat df = new DecimalFormat("#.##");
 
-                        output = ""+priceFloat;
                         priceString = output;
+//                        String output = nf.format(priceFloat);
+//                        DecimalFormat df = new DecimalFormat("#.##");
+//
+//
+//                        output = ""+priceFloat;
+//                        priceString = output;
 
                             ScannedProduct scanInfo = new ScannedProduct();
                             scanInfo.setPrice(priceFloat);
@@ -646,7 +650,8 @@ public class MainActivity extends ActionBarActivity {
                                     "You haven't entered all the data", Toast.LENGTH_LONG).show();
 
                         } else {
-                            priceFloat = Float.parseFloat(inputPrice.getText().toString());
+                            String myFloat = inputPrice.getText().toString().replace(",", ".");
+                            priceFloat = Float.parseFloat(myFloat);
                             storeString = inputStore.getText().toString();
                             nameString = inputName.getText().toString();
                                 NumberFormat nf = NumberFormat.getInstance();

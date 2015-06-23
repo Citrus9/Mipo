@@ -22,7 +22,8 @@
         android:id="@+id/tvDate"
         android:maxLines="2"
         android:layout_marginLeft="3dp"
-        android:layout_below="@+id/tvStore" />
+        android:layout_below="@+id/tvStore"
+        android:textColor="#ff000000" />
 
     <TextView
         android:layout_width="wrap_content"
