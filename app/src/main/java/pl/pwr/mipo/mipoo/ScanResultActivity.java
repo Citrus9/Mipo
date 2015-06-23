@@ -67,7 +67,8 @@ public class ScanResultActivity extends ActionBarActivity {
         }
 
         avgPrice = allPrices/amountOfProducts;
-        Float price = Float.parseFloat(yourPrice);
+
+        Double price = Double.parseDouble(yourPrice);
 
         if(avgPrice >= price){
             imgThumbs.setImageResource(R.drawable.thumbs_up);

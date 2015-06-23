@@ -91,6 +91,9 @@ public class ProductsActivity extends ActionBarActivity{
         mExtras = getIntent().getExtras();
 
         extraListId = mExtras.getLong(ListsDatabaseAdapter.ITEM_KEY_ROWID);
+
+        displayProductsList(extraListId);
+        mMAdapter.persistChanges();
         displayProductsList(extraListId);
 
         isSync = mDbHelper.isSyncedList(extraListId);

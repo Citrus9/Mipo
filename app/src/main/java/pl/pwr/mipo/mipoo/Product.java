@@ -11,14 +11,15 @@ public class Product {
     private long listid;
     private int position;
     private int count;
+    private int bought;
 
-    public Product( String name, int complete, long listid, int position, int count) {
+    public Product( String name, int complete, long listid, int position, int count, int bought) {
         this.name = name;
         this.complete = complete;
         this.listid = listid;
         this.position = position;
         this.count = count;
-
+        this.bought = bought;
     }
 
     public long getId() {
@@ -67,5 +68,13 @@ public class Product {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public void setBought(int bought) {
+        this.bought = bought;
+    }
+
+    public int getBought() {
+        return bought;
     }
 }

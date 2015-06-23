@@ -57,6 +57,7 @@ import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,7 +100,7 @@ public class MainActivity extends ActionBarActivity {
     private EditText inputRegEmail;
     private EditText inputRegPassword;
 
-    private float priceFloat;
+    private double priceFloat;
     private String nameString;
     private String storeString;
     private String priceString;
@@ -581,9 +582,13 @@ public class MainActivity extends ActionBarActivity {
                         nf.setMinimumFractionDigits(2);
                         nf.setMaximumFractionDigits(2);
                         String output = nf.format(priceFloat);
+                        DecimalFormat df = new DecimalFormat("#.##");
+
+                        output = ""+priceFloat;
                         priceString = output;
+
                             ScannedProduct scanInfo = new ScannedProduct();
-                            scanInfo.setPrice(Float.parseFloat(priceString));
+                            scanInfo.setPrice(priceFloat);
                             scanInfo.setPriceString(priceString);
                             scanInfo.setStoreName(storeString);
                             scanInfo.setBarcode(Long.parseLong(barcode));
@@ -879,7 +884,8 @@ public class MainActivity extends ActionBarActivity {
                             ScannedProduct scanInfo = new ScannedProduct();
 //                        scanInfo.setBarcode(obj.getString("barcode"));
                             scanInfo.setProductName(jObj.getString("name"));
-                            scanInfo.setPrice(Float.parseFloat(jObj.getString("price")));
+                            Log.d("FLOAT", jObj.getString("price"));
+                            scanInfo.setPrice(Float.valueOf(jObj.getString("price")));
                             scanInfo.setPriceString(jObj.getString("price"));
                             scanInfo.setStoreName(jObj.getString("shop"));
                             scanInfo.setBarcode(Long.parseLong(barcode));
@@ -976,9 +982,12 @@ public class MainActivity extends ActionBarActivity {
 
                         for (int i = 0; i < jArray2.length(); i++) {
                             JSONObject jObj = jArray2.getJSONObject(i);
-                            Product p = new Product("n", 0, 0, 0, 0);
+                            Product p = new Product("n", 0, 0, 0, 0, 0);
                             p.setName(jObj.getString("name"));
                             p.setListid(Long.parseLong(jObj.getString("idList")));
+                            p.setBought(Integer.parseInt(jObj.getString("bought")));
+
+                            Log.d("DELETED:", "product:" + p.getName() + " " + p.getBought());
                             if(p.getId()!=-1)
                                 myProds.add(p);
                         }
@@ -999,9 +1008,11 @@ public class MainActivity extends ActionBarActivity {
                         ArrayList<Product> dataProds = new ArrayList<Product>();
                         if (c1 != null) {
                             while (c1.moveToNext()) {
-                                Product p = new Product("n", 0, 0, 0, 0);
+                                Product p = new Product("n", 0, 0, 0, 0, 0);
+                                p.setId(c1.getInt(0));
                                 p.setName(c1.getString(1));
                                 p.setListid(c1.getInt(4));
+                                p.setBought(c1.getInt(3));
                                 dataProds.add(p);
                             }
                             c1.close();
@@ -1019,10 +1030,11 @@ public class MainActivity extends ActionBarActivity {
                                     }
                                 }
                             }
-                            for (int i = 0; i < myList.size(); i++)
-                                if(myList.get(i).getCount()<=0)
+                            for (int i = 0; i < myList.size(); i++) {
+                                if (myList.get(i).getCount() <= 0) {
                                     mDbHelper.insertPreListRecord(myList.get(i).getName(), myList.get(i).getId());
-
+                                }
+                            }
                         }
 
 
@@ -1037,6 +1049,12 @@ public class MainActivity extends ActionBarActivity {
                                     if (myProds.get(i).getName().equals(dataProds.get(k).getName()) &&
                                             myProds.get(i).getListid() == dataProds.get(k).getListid()) {
                                             myProds.get(i).setCount(1);
+                                        if(myProds.get(i).getBought() != dataProds.get(k).getBought()) {
+                                            Log.d("DELETED:", "product:" + dataProds.get(k).getName() + " " + dataProds.get(k).getId());
+                                            mDbHelper.deleteProductRecord(dataProds.get(k).getId());
+
+                                            myProds.get(i).setCount(0);
+                                        }
                                         Log.d("LOL:", "product:" + myProds.get(i).getName());
                                     }
                                 }
@@ -1061,8 +1079,11 @@ public class MainActivity extends ActionBarActivity {
 //                                }
 
                             for (int j = 0; j < myProds.size(); j++)
-                                if(myProds.get(j).getCount()<=0)
-                                    mDbHelper.insertProductRecord(myProds.get(j).getName(), myProds.get(j).getListid(), 0);
+                                if(myProds.get(j).getCount()<=0) {
+
+                                    Log.d("ADDED", myProds.get(j).getName() + " " + myProds.get(j).getBought());
+                                    mDbHelper.insertProductRecord(myProds.get(j).getName(), myProds.get(j).getListid(), myProds.get(j).getBought());
+                                }
 
                         }
 
@@ -1071,6 +1092,7 @@ public class MainActivity extends ActionBarActivity {
                                     + myList.get(i).getId() + " "
                                     + myList.get(i).getName());
                         }
+                        mMAdapter.persistChanges();
                         displayItemList();
 
                     }else{
@@ -1120,7 +1142,7 @@ public class MainActivity extends ActionBarActivity {
 //        showDialog();
 
         final String newName = sc.getProductName();
-        final float newPrice = sc.getPrice();
+        final double newPrice = sc.getPrice();
         final String newPriceString = sc.getPriceString();
         final String newStore = sc.getStoreName();
 
@@ -1185,7 +1207,7 @@ public class MainActivity extends ActionBarActivity {
 //        showDialog();
 
         final String newName = sc.getProductName();
-        final float newPrice = sc.getPrice();
+        final double newPrice = sc.getPrice();
         final String newPriceString = sc.getPriceString();
         final String newStore = sc.getStoreName();
         Log.d("LOG_ADD_PRICE", "UID: " + session.getUserLogged());

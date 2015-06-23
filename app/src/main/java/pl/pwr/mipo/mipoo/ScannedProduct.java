@@ -10,7 +10,7 @@ public class ScannedProduct implements Serializable {
 
     private String productName;
     private String storeName;
-    private float price;
+    private double price;
     private String priceString;
     private long barcode;
     private Date date;
@@ -45,11 +45,11 @@ public class ScannedProduct implements Serializable {
         this.storeName = storeName;
     }
 
-    public float getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(float price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 

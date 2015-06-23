@@ -22,7 +22,7 @@
         android:layout_marginTop="4dp"
         android:textColor="#000000"
         android:hint="Price"
-        android:inputType="numberDecimal" />
+        android:inputType="number" />
 
     <EditText
         android:id="@+id/store"
